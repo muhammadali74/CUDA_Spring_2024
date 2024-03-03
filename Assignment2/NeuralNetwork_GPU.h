@@ -96,19 +96,30 @@ class Matrix{
         data = new float[rows*cols];
     }
 
+	Matrix() {
+		rows = 0;
+		cols = 0;
+		data = nullptr;
+	}
+
+	Matrix(int rows, int cols, float *data) : rows(rows), cols(cols), data(data) {
+		this->data = new float[rows*cols];
+		memcpy(this->data, data, rows*cols*sizeof(float));
+	}
+	
     ~Matrix() {
         delete[] data;
     }
 
-    __host__ __device__ float& operator()(int row, int col) {
-        if (row >= 0 && row < rows && col >=0 && col < cols) {
-            return &data[row*cols + col];
-        }
-        else {
-            cout << "Invalid access" << endl;
-            return 0; 
-        }
-    }
+    // __host__ __device__ float& operator()(int row, int col) {
+    //     if (row >= 0 && row < rows && col >=0 && col < cols) {
+    //         return &data[row*cols + col];
+    //     }
+    //     else {
+    //         cout << "Invalid access" << endl;
+    //         return 0; 
+    //     }
+    // }
 
     Matrix operator*(float num) {
 		Matrix result(rows, cols);
@@ -243,7 +254,7 @@ class Matrix{
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		EmultiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols, cols);
+		EmultiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -343,7 +354,7 @@ class Matrix{
 	Matrix log() {
 		Matrix result(rows, cols);
 		for (int i = 0; i < rows*cols; i++) {
-			result.data[i] = log(data[i]);
+			result.data[i] = std::log(data[i]);
 		}
 		return result;
 	}
@@ -356,7 +367,7 @@ class Matrix{
 			os << std::endl;
 		}
 	}
-}
+};
 
 
 
