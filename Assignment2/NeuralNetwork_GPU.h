@@ -280,7 +280,7 @@ class Matrix{
 		return result;
 	}
 
-	Matrix operator / (Matrix& m) {
+	Matrix operator / (const Matrix& m) {
 		if (rows != m.rows || cols != m.cols) {
 			std::cout << "Invalid size" << std::endl;
 			return *this;
