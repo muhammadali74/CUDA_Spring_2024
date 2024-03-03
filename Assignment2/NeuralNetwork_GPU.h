@@ -148,6 +148,7 @@ class Matrix{
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
 		multiplyfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -169,6 +170,7 @@ class Matrix{
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
 		addKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -188,6 +190,7 @@ class Matrix{
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
 		addfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -209,6 +212,7 @@ class Matrix{
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
 		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -226,6 +230,7 @@ class Matrix{
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
 		negateKernel<<<dimGrid, dimBlock>>>(data_d, rows, cols);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(result.data, data_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -246,6 +251,7 @@ class Matrix{
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
 		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -272,6 +278,7 @@ class Matrix{
 		dim3 dimGrid((m.cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
 		multiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols, m.cols);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(result.data, result_d, rows*m.cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -299,6 +306,7 @@ class Matrix{
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
 		divideKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -326,6 +334,7 @@ class Matrix{
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
 		EmultiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -346,6 +355,7 @@ class Matrix{
 		dim3 dimGrid((rows + dimBlock.x - 1) / dimBlock.x, (cols + dimBlock.y - 1) / dimBlock.y);
 		
 		transposeKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(result.data, result_d, cols*rows*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -367,6 +377,7 @@ class Matrix{
 		dim3 dimGrid((outputSize + dimBlock.x - 1) / dimBlock.x, (inputSize + dimBlock.y - 1) / dimBlock.y);
 
 		randomKernel<<<dimGrid, dimBlock>>>(result_d, inputSize, outputSize);
+		cudaDeviceSynchronize();
 
 		cudaMemcpy(random.data, result_d, inputSize*outputSize*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(result_d);
