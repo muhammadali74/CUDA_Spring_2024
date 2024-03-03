@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <vector>
-#include <Eigen/Dense>
+// #include <Eigen/Dense>
 #include <numeric> //std::iota
 #include <cmath>
 #include <cstring>
@@ -436,7 +436,7 @@ class Matrix{
 ostream& operator << (std::ostream& os, Matrix &m) {
 		for (int i = 0; i < m.rows; i++) {
 			for (int j = 0; j < m.cols; j++) {
-				os << m.data[i*cols + j] << " ";
+				os << m.data[i*m.cols + j] << " ";
 			}
 			os << std::endl;
 		}
