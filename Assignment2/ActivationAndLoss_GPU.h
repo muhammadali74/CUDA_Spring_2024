@@ -2,7 +2,7 @@
 #define ACTIVATION_INC
 #pragma once
 #include <cmath>
-#include <Eigen/Dense>
+// #include <Eigen/Dense>
 
 __host__ __device__ float sigmoid(float x)
 {
