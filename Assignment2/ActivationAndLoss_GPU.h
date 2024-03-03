@@ -49,7 +49,7 @@ __host__ __device__ float mse(Matrix& y_true, Matrix& y_pred)
 
 Matrix mse_prime(Matrix& y_true, Matrix& y_pred)
 {
-	return   ((y_pred - y_true)*2) * ( 1 / (y_true.rows()*y_true.cols()));
+	return   ((y_pred - y_true)*2) * ( 1 / (y_true.Rows()*y_true.Cols()));
 }
 
 float binary_cross_entropy(Eigen::MatrixXf& y_true, Eigen::MatrixXf& y_pred)
