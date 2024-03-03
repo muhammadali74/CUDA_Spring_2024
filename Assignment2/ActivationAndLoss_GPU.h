@@ -52,7 +52,7 @@ Matrix mse_prime(Matrix& y_true, Matrix& y_pred)
 	return   ((y_pred - y_true)*2) * ( 1 / (y_true.Rows()*y_true.Cols()));
 }
 
-float binary_cross_entropy(Eigen::MatrixXf& y_true, Eigen::MatrixXf& y_pred)
+float binary_cross_entropy(Matrix& y_true, Matrix& y_pred)
 {
 	return  (-y_true * y_pred.log()).mean() - (y_true.unaryExpr(one_minus)) * (y_pred.unaryExpr(one_minus)).log();
 }

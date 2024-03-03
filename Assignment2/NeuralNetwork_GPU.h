@@ -390,7 +390,7 @@ class Matrix{
 	}
 };
 
-void PrintMatrixSize(Matrix& m, const std::string msg) {
+void printMatrixSize(const std::string msg, Matrix& m) {
 	std::cout << msg.c_str() << "[" << m.Rows() << "," << m.Cols() << "]" << std::endl;
 }
 
