@@ -280,7 +280,7 @@ class Matrix{
 		return result;
 	}
 
-	Matrix operator/(Matrix& m) {
+	Matrix operator / (Matrix& m) {
 		if (rows != m.rows || cols != m.cols) {
 			std::cout << "Invalid size" << std::endl;
 			return *this;
@@ -430,7 +430,7 @@ class Matrix{
 		return result;
 	}
 
-	ostream& operator <<(std::ostream& os) {
+	ostream& operator << (std::ostream& os) {
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
 				os << data[i*cols + j] << " ";
