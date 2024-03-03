@@ -54,7 +54,7 @@ Matrix mse_prime(Matrix& y_true, Matrix& y_pred)
 
 float binary_cross_entropy(Matrix& y_true, Matrix& y_pred)
 {
-	return  (-y_true * y_pred.log()).mean() - (y_true.unaryExpr(one_minus)) * (y_pred.unaryExpr(one_minus)).log();
+	return  (-y_true * y_pred.log()).mean() - ((y_true.unaryExpr(one_minus)) * (y_pred.unaryExpr(one_minus)).log()).mean();
 }
 
 Matrix binary_cross_entropy_prime(Matrix& y_true, Matrix& y_pred)

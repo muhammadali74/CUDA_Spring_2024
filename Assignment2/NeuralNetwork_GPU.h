@@ -29,6 +29,14 @@ __global__ void addKernel(float *data, float *m, float *result, int rows, int co
 	}
 }
 
+__global__ void addfloatKernel(float *data, float num, float *result, int rows, int cols) {
+	int row = blockIdx.y * blockDim.y + threadIdx.y;
+	int col = blockIdx.x * blockDim.x + threadIdx.x;
+	if (row < rows && col < cols) {
+		result[row*cols + col] = data[row*cols + col] + num;
+	}
+}
+
 __global__ void subtractKernel(float *data, float *m, float *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -165,6 +173,24 @@ class Matrix{
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(m_d);
+		cudaFree(result_d);
+		return result;
+	}
+
+	Matrix operator +(const float& num) {
+		Matrix result(rows, cols);
+		float *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(float));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
+		float *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(float));
+		dim3 dimBlock(16, 16);
+		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+
+		addfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
+
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
 		cudaFree(result_d);
 		return result;
 	}
