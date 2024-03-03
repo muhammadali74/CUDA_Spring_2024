@@ -430,15 +430,17 @@ class Matrix{
 		return result;
 	}
 
-	ostream& operator << (std::ostream& os) {
+
+};
+
+ostream& operator << (std::ostream& os, Matrix &m) {
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
-				os << data[i*cols + j] << " ";
+				os << m.data[i*cols + j] << " ";
 			}
 			os << std::endl;
 		}
 	}
-};
 
 void printMatrixSize(const std::string msg, Matrix& m) {
 	std::cout << msg.c_str() << "[" << m.Rows() << "," << m.Cols() << "]" << std::endl;

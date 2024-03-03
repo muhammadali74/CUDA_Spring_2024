@@ -34,7 +34,8 @@ int main()
 	// 	std::cout << out << std::endl; 
 	std::vector<Matrix> output = nn.predict(x_train);
 	for (Matrix out : output)
-		std::cout << out << std::endl;
+		std::cout << out;
+		std::cout << std::endl;
 
 	return 0;
 }
