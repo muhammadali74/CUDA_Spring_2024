@@ -106,7 +106,7 @@ class Matrix{
 		this->data = new float[rows*cols];
 		memcpy(this->data, data, rows*cols*sizeof(float));
 	}
-	
+
     ~Matrix() {
         delete[] data;
     }
@@ -121,7 +121,7 @@ class Matrix{
     //     }
     // }
 
-    Matrix operator*(float num) {
+    Matrix operator *(const float& num) {
 		Matrix result(rows, cols);
 		float *data_d;
 		cudaMalloc(&data_d, rows*cols*sizeof(float));
@@ -139,7 +139,7 @@ class Matrix{
 		return result;
 	}
 
-	Matrix operator+(Matrix& m) {
+	Matrix operator +(const Matrix& m) {
 		Matrix result(rows, cols);
 		float *data_d;
 		cudaMalloc(&data_d, rows*cols*sizeof(float));
@@ -161,7 +161,7 @@ class Matrix{
 		return result;
 	}
 
-	Matrix operator-(Matrix& m) {
+	Matrix operator -(const Matrix& m) {
 		Matrix result(rows, cols);
 		float *data_d;
 		cudaMalloc(&data_d, rows*cols*sizeof(float));
@@ -183,7 +183,28 @@ class Matrix{
 		return result;
 	}
 
-	Matrix operator*(Matrix& m) {
+	Matrix operator -=(const Matrix& m) {
+		float *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(float));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
+		float *m_d;
+		cudaMalloc(&m_d, rows*cols*sizeof(float));
+		cudaMemcpy(m_d, m.data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
+		float *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(float));
+		dim3 dimBlock(16, 16);
+		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+
+		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+
+		cudaMemcpy(data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(m_d);
+		cudaFree(result_d);
+		return *this;
+	}
+
+	Matrix operator * (const Matrix& m) {
 		if (cols != m.rows) {
 			std::cout << "Invalid size" << std::endl;
 			return *this;
@@ -445,7 +466,7 @@ public:
 
 	//Returns inputRrror = dE / dX for a given output_error = dE / dY.
 	//learningRate is not used because there is no "learnable" parameters.
-	Eigen::MatrixXf backwardPropagation(Eigen::MatrixXf& outputError, float learningRate)
+	Matrix backwardPropagation(Matrix& outputError, float learningRate)
 	{ 
 		return (input.unaryExpr(activationPrime).eMul(outputError));
 	}
@@ -483,7 +504,7 @@ public:
 		layers.push_back(layer);
 	}
 
-	void use(std::function<float(Eigen::MatrixXf&, Eigen::MatrixXf&)> lossF, std::function<Eigen::MatrixXf(Eigen::MatrixXf&, Eigen::MatrixXf&)> lossDer)
+	void use(std::function<float(Matrix&, Matrix&)> lossF, std::function<Matrix(Matrix&, Matrix&)> lossDer)
 	{
 		loss = lossF;
 		lossPrime = lossDer;
@@ -498,7 +519,7 @@ public:
 		//forward propagation
 		for (int j = 0; j < samples; ++j)
 		{
-			Eigen::MatrixXf output = input.row(j);
+			Matrix output = input.row(j);
 			for (Layer* layer : layers)
 				output = layer->forwardPropagation(output);
 
@@ -510,7 +531,7 @@ public:
 
 
 	//train the network
-	virtual void fit(Eigen::MatrixXf x_train, Eigen::MatrixXf y_train, int epochs, float learningRate)
+	virtual void fit(Matrix x_train, Matrix y_train, int epochs, float learningRate)
 	{ 
 		int samples = x_train.Rows();
 		std::cout << "Samples: " << samples << std::endl;
