@@ -11,9 +11,11 @@ int main()
 	// Eigen::MatrixXf x_train{ {0, 0}, {0, 1}, {1, 0}, {1,1} };
 	// Eigen::MatrixXf y_train{ {0}, {1}, {1}, {0} };
 	Matrix x_train(4, 2);
-	x_train.data = { 0, 0, 0, 1, 1, 0, 1, 1 };
+	float xtrain[] = { 0, 0, 0, 1, 1, 0, 1, 1 };
+	x_train.data = xtrain;
 	Matrix y_train(4, 1);
-	y_train.data = { 0, 1, 1, 0 };
+	float ytrain[] = { 0, 1, 1, 0 };
+	y_train.data = ytrain;
 
 	Network nn;
 	nn.add(new DenseLayer(2, 3));

@@ -60,6 +60,14 @@ __global__ void multiplyKernel(float *d_M, float *d_N, float *d_P, int rows, int
 	}
 }
 
+__global__ void negateKernel(float *data, int rows, int cols) {
+	int row = blockIdx.y * blockDim.y + threadIdx.y;
+	int col = blockIdx.x * blockDim.x + threadIdx.x;
+	if (row < rows && col < cols) {
+		data[row*cols + col] = -data[row*cols + col];
+	}
+}
+
 __global__ void EmultiplyKernel(float *data, float *m, float *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -181,6 +189,22 @@ class Matrix{
 		cudaFree(m_d);
 		cudaFree(result_d);
 		return result;
+	}
+
+	Matrix operator -() const {
+		Matrix result(rows, cols);
+		float *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(float));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
+		dim3 dimBlock(16, 16);
+		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+
+		negateKernel<<<dimGrid, dimBlock>>>(data_d, rows, cols);
+
+		cudaMemcpy(result.data, data_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		return result;
+	
 	}
 
 	Matrix operator -=(const Matrix& m) {
@@ -380,7 +404,7 @@ class Matrix{
 		return result;
 	}
 
-	ostream& operator<<(std::ostream& os) {
+	ostream& operator <<(std::ostream& os) {
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
 				os << data[i*cols + j] << " ";
@@ -415,7 +439,7 @@ protected:
 class DenseLayer : public Layer
 {
 public:
-	DenseLayer(int inputSize, int  outputSize)
+	DenseLayer(int inputSize, int outputSize)
 	{
 		//Eigen::MatrixXf::Random returns values from [-1,1] we should scale it to [-0.5,0.5]
 		weights = Matrix::Random(inputSize, outputSize) * 0.5f;

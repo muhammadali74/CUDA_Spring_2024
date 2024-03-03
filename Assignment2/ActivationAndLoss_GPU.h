@@ -59,7 +59,7 @@ float binary_cross_entropy(Matrix& y_true, Matrix& y_pred)
 
 Matrix binary_cross_entropy_prime(Matrix& y_true, Matrix& y_pred)
 {
-	return ((1 - y_true) / (1 - y_pred) - y_true / y_pred) / y_true.size();
+	return ((-y_true + 1) / (-y_pred + 1) - y_true / y_pred) / y_true.size();
 }
 
 #endif
