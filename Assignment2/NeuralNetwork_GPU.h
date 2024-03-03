@@ -45,7 +45,7 @@ __global__ void divideKernel(float *data, float *m, float *result, int rows, int
 	}
 }
 
-__global__ void multiplyKernel(float *data, float *m, float *result, int rows, int cols, int mCols) {
+__global__ void multiplyKernel(float *d_M, float *d_N, float *d_P, int rows, int cols, int mCols) {
 		// Calculate the row index of the d_Pelement and d_M
 	int Row = blockIdx.y*blockDim.y+threadIdx.y;
 	// Calculate the column index of d_P and d_N
@@ -291,15 +291,15 @@ class Matrix{
         return random;
     }
 
-	int rows():
+	int rows()
 	{
 		return this->rows;
 	}
-	int cols():
+	int cols()
 	{
 		return this->cols;
 	}
-	int size():
+	int size()
 	{
 		return this->rows * this->cols;
 	}
