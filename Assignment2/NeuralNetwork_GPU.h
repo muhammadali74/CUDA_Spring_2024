@@ -434,8 +434,8 @@ class Matrix{
 };
 
 ostream& operator << (std::ostream& os, Matrix &m) {
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
+		for (int i = 0; i < m.rows; i++) {
+			for (int j = 0; j < m.cols; j++) {
 				os << m.data[i*cols + j] << " ";
 			}
 			os << std::endl;
