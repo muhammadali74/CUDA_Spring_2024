@@ -291,11 +291,11 @@ class Matrix{
         return random;
     }
 
-	int rows()
+	int Rows()
 	{
 		return this->rows;
 	}
-	int cols()
+	int Cols()
 	{
 		return this->cols;
 	}
@@ -451,12 +451,12 @@ public:
 	{
 		this->input = input;
 		this->output = input;
-		this->output.resize(1, input.rows() * input.cols()); //flatten
+		this->output.resize(1, input.Rows() * input.Cols()); //flatten
 		return this->output;
 	}
 	Matrix backwardPropagation(Matrix& outputError, float learningRate)
 	{
-		outputError.resize(input.rows(), input.cols());
+		outputError.resize(input.Rows(), input.Cols());
 		return outputError;
 	}
 };
@@ -480,7 +480,7 @@ public:
 
 	std::vector<Matrix> predict(Matrix input)
 	{
-		int samples = input.rows();
+		int samples = input.Rows();
 
 		std::vector<Matrix> result;
 
@@ -501,7 +501,7 @@ public:
 	//train the network
 	virtual void fit(Eigen::MatrixXf x_train, Eigen::MatrixXf y_train, int epochs, float learningRate)
 	{ 
-		int samples = x_train.rows();
+		int samples = x_train.Rows();
 		std::cout << "Samples: " << samples << std::endl;
 		printMatrixSize("x_train", x_train);
 		printMatrixSize("y_train", y_train);
