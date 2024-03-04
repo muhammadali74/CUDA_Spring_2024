@@ -176,11 +176,11 @@ int main()
 
     // auto top3 = y_valid(Eigen::seq(0, 2), Eigen::indexing::all);
     auto top3 = y_valid.block(0, 2, 0, 9);
-    for (int i = 0; i < top3.rows(); ++i)
+    for (int i = 0; i < top3.Rows(); ++i)
     {
         //std::cout << top3.row(i) << std::endl;
         int maxIndex = -1;
-        for (int j = 0; j < top3.cols(); ++j)
+        for (int j = 0; j < top3.Cols(); ++j)
         {
             if (top3(i, j) == 1)
             {
