@@ -125,9 +125,9 @@ class Matrix{
 		memcpy(this->data, data, rows*cols*sizeof(float));
 	}
 
-    ~Matrix() {
-        delete[] data;
-    }
+    // ~Matrix() {
+    //     delete[] data;
+    // }
 
     // __host__ __device__ float& operator()(int row, int col) {
     //     if (row >= 0 && row < rows && col >=0 && col < cols) {
@@ -616,6 +616,7 @@ public:
 		for (int i = 0; i < epochs; ++i)
 		{
 			float err = 0.0f;
+
 			
 			//feed forward
 			std::random_shuffle(order.begin(), order.end());
