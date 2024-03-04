@@ -146,6 +146,8 @@ int main()
     //train
     printMatrixSize("x_train", x_train);
     printMatrixSize("y_train", y_train);
+    cout << x_train.block(1000, 784, 0,0);
+    cout << y_train.block(1000, 10,0,0);
 
     // nn.fit(x_train.block<1000,784>(0,0), y_train.block<1000,10>(0,0), epoch, 0.1f);
     nn.fit(x_train.block(1000, 784, 0,0), y_train.block(1000, 10,0,0), epoch, 0.1f);
@@ -161,7 +163,7 @@ int main()
        // std::cout << out << std::endl;
         int maxIndex = -1;
         float maxValue = -1000;
-        for (int i = 0; i < out.cols(); ++i)
+        for (int i = 0; i < out.Cols(); ++i)
         {
             if (out(0, i) > maxValue)
             {
