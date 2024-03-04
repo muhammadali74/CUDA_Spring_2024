@@ -453,6 +453,7 @@ ostream& operator << (std::ostream& os, Matrix &m) {
 			}
 			os << std::endl;
 		}
+		return os;
 	}
 
 void printMatrixSize(const std::string msg, Matrix& m) {
