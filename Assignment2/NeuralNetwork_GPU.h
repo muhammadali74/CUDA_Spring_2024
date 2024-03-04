@@ -572,6 +572,7 @@ public:
 	void add(Layer* layer)
 	{
 		layers.push_back(layer);
+		cout << "Layer added" << endl;
 	}
 
 	void use(std::function<float(Matrix&, Matrix&)> lossF, std::function<Matrix(Matrix&, Matrix&)> lossDer)
