@@ -15,6 +15,13 @@
 
 using namespace std;
 
+cudaError_t gpuErrchk(cudaError_t result) {
+	if (result != cudaSuccess) {
+		fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
+	}
+	return result;
+}
+
 __global__ void multiplyfloatKernel(float *data, float num, float *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -159,6 +166,7 @@ class Matrix{
 
 		multiplyfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -181,6 +189,7 @@ class Matrix{
 
 		addKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -201,6 +210,7 @@ class Matrix{
 
 		addfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -223,6 +233,7 @@ class Matrix{
 
 		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -241,6 +252,7 @@ class Matrix{
 
 		negateKernel<<<dimGrid, dimBlock>>>(data_d, rows, cols);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(result.data, data_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -262,6 +274,7 @@ class Matrix{
 
 		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -289,6 +302,7 @@ class Matrix{
 
 		multiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols, m.cols);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(result.data, result_d, rows*m.cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -317,6 +331,7 @@ class Matrix{
 
 		divideKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -345,6 +360,7 @@ class Matrix{
 
 		EmultiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -366,6 +382,7 @@ class Matrix{
 		
 		transposeKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(result.data, result_d, cols*rows*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
@@ -388,6 +405,7 @@ class Matrix{
 
 		randomKernel<<<dimGrid, dimBlock>>>(result_d, inputSize, outputSize);
 		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
 		cudaMemcpy(random.data, result_d, inputSize*outputSize*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(result_d);
