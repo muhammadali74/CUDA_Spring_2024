@@ -8,8 +8,8 @@
 
 #include <numeric> //std::iota
 
-#include "NeuralNetwork.h"
-#include "ActivationAndLossFunctions.h"
+#include "NeuralNetwork_GPU.h"
+#include "ActivationAndLoss_GPU.h"
 
 // using namespace Eigen;
 
