@@ -2,7 +2,7 @@
 #include <fstream>
 #include <math.h>
 #include <cstdlib>
-#include <Eigen/Dense>
+// #include <Eigen/Dense>
 #include <vector>
 #include <string>
 
@@ -11,7 +11,7 @@
 #include "NeuralNetwork.h"
 #include "ActivationAndLossFunctions.h"
 
-using namespace Eigen;
+// using namespace Eigen;
 
 #define epsilon 0.7
 #define epoch 35
@@ -29,12 +29,12 @@ unsigned int label[training_size];
 unsigned int val_label[val_size];
 
 //inputs
-MatrixXf x_train = MatrixXf::Zero(training_size, 784);
-MatrixXf y_train = MatrixXf::Zero(training_size, 10);
+Matrix x_train = Matrix::Zero(training_size, 784);
+Matrix y_train = Matrix::Zero(training_size, 10);
 
 //validation
-MatrixXf x_valid = MatrixXf::Zero(val_size, 784);
-MatrixXf y_valid = MatrixXf::Zero(val_size, 10);
+Matrix x_valid = Matrix::Zero(val_size, 784);
+Matrix y_valid = Matrix::Zero(val_size, 10);
 
 unsigned int in(std::ifstream& icin, unsigned int size)
 {
@@ -125,8 +125,8 @@ void input(std::string ipath, std::string lpath, std::string ipath2, std::string
 
 int main()
 {
-    std::cout << "Using Eigen ver: " << EIGEN_WORLD_VERSION << "." << 
-                  EIGEN_MAJOR_VERSION << "." << EIGEN_MINOR_VERSION << std::endl;
+//     std::cout << "Using Eigen ver: " << EIGEN_WORLD_VERSION << "." << 
+//                   EIGEN_MAJOR_VERSION << "." << EIGEN_MINOR_VERSION << std::endl;
 
     input("/content/data/train-images-idx3-ubyte",
         "/content/data/train-labels-idx1-ubyte",
@@ -147,14 +147,16 @@ int main()
     printMatrixSize("x_train", x_train);
     printMatrixSize("y_train", y_train);
 
-    nn.fit(x_train.block<1000,784>(0,0), y_train.block<1000,10>(0,0), epoch, 0.1f);
+    // nn.fit(x_train.block<1000,784>(0,0), y_train.block<1000,10>(0,0), epoch, 0.1f);
+    nn.fit(x_train.block(1000, 784, 0,0), y_train.block(1000, 10,0,0), epoch, 0.1f);
 
 
     //test
-    std::vector<Eigen::MatrixXf> output = nn.predict(x_valid(Eigen::seq(0, 2), Eigen::indexing::all));
+    // std::vector<Matrix> output = nn.predict(x_valid(Eigen::seq(0, 2), Eigen::indexing::all));
+    std::vector<Matrix> output = nn.predict(x_valid(0, 2, 0, 783));
 
     std::cout << "Predicted values: " << std::endl;
-    for (Eigen::MatrixXf out : output)
+    for (Matrix out : output)
     {
        // std::cout << out << std::endl;
         int maxIndex = -1;
@@ -172,7 +174,8 @@ int main()
     std::cout << "\nTrue values: " << std::endl;
 
 
-    auto top3 = y_valid(Eigen::seq(0, 2), Eigen::indexing::all);
+    // auto top3 = y_valid(Eigen::seq(0, 2), Eigen::indexing::all);
+    auto top3 = y_valid.block(0, 2, 0, 9);
     for (int i = 0; i < top3.rows(); ++i)
     {
         //std::cout << top3.row(i) << std::endl;

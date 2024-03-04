@@ -129,15 +129,23 @@ class Matrix{
     //     delete[] data;
     // }
 
-    // __host__ __device__ float& operator()(int row, int col) {
-    //     if (row >= 0 && row < rows && col >=0 && col < cols) {
-    //         return &data[row*cols + col];
-    //     }
-    //     else {
-    //         cout << "Invalid access" << endl;
-    //         return 0; 
-    //     }
-    // }
+    float& operator()(int i, int j) {
+		if (i >= 0 && i < rows && j >= 0 && j < cols){
+		return data[i*cols + j];
+		}
+		else {
+			throw std::out_of_range("Index out of bounds");
+		}
+	}
+
+	float operator()(int i, int j) const {
+		if (i >= 0 && i < rows && j >= 0 && j < cols){
+			return data[i*cols + j];
+		}
+		else {
+			throw std::out_of_range("Index out of bounds");
+		}
+	}
 
     Matrix operator *(const float& num) {
 		Matrix result(rows, cols);
@@ -386,6 +394,13 @@ class Matrix{
         return random;
     }
 
+	static Matrix Zero(int rowsize, int colsize){
+		Matrix zero(rowsize, colsize);
+		memset(zero.data, 0, rowsize*colsize*sizeof(float));
+		return zero;
+
+	}
+
 	int Rows()
 	{
 		return this->rows;
@@ -439,6 +454,26 @@ class Matrix{
 		Matrix result(rows, cols);
 		for (int i = 0; i < rows*cols; i++) {
 			result.data[i] = std::log(data[i]);
+		}
+		return result;
+	}
+
+	Matrix block(int row_num, int col_num, int startrow, int startcol) {
+		Matrix result(row_num, col_num);
+		for (int i = 0; i < row_num; i++) {
+			for (int j = 0; j < col_num; j++) {
+				result(i, j) = data[(i + startrow)*cols + j + startcol];
+			}
+		}
+		return result;
+	}
+
+	Matrix operator()(int startrow, int endrow, int startcol, int endcol) const {
+		Matrix result(endrow - startrow, endcol - startcol);
+		for (int i = startrow; i < endrow; i++) {
+			for (int j = startcol; j < endcol; j++) {
+				result(i - startrow, j - startcol) = data[i*cols + j];
+			}
 		}
 		return result;
 	}
