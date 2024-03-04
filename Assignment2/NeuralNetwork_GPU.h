@@ -10,6 +10,8 @@
 #include <cstring>
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
+#include <algorithm>
+#include <functional>
 
 using namespace std;
 
