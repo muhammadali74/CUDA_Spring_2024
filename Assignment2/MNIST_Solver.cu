@@ -146,7 +146,7 @@ int main()
     //train
     printMatrixSize("x_train", x_train);
     printMatrixSize("y_train", y_train);
-    Matrix k = x_train.block(1000, 784, 0,0)
+    // Matrix k = x_train.block(1000, 784, 0,0)
     // cout << k;
     // cout << y_train;
 

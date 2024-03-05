@@ -73,7 +73,7 @@ __global__ void multiplyKernel(float *d_M, float *d_N, float *d_P, int rows, int
 		for (int k = 0; k < cols; ++k) {
 			Pvalue += d_M[Row*cols +k]*d_N[k*cols+Col];
 		}
-		d_P[Row*rows + Col] = Pvalue;
+		d_P[Row*mCols + Col] = Pvalue;
 		
 	}
 }
@@ -425,7 +425,10 @@ class Matrix{
 
 	static Matrix Zero(int rowsize, int colsize){
 		Matrix zero(rowsize, colsize);
-		memset(zero.data, 0, rowsize*colsize*sizeof(float));
+		// memset(zero.data, 0, rowsize*colsize*sizeof(float));
+		for (int i = 0; i < rowsize*colsize; i++) {
+			zero.data[i] = 0;
+		}
 		return zero;
 
 	}
