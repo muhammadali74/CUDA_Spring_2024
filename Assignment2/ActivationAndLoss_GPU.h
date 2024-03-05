@@ -4,43 +4,43 @@
 #include <cmath>
 // #include <Eigen/Dense>
 
-float sigmoid(float x)
+double sigmoid(double x)
 {
-	return 1.0f / 1.0f + exp(-x);
+	return 1.0d / 1.0d + exp(-x);
 }
 
-float sigmoid_prime(float x)
+double sigmoid_prime(double x)
 {
-	float s = sigmoid(x);
+	double s = sigmoid(x);
 	return s * (1 - s);
 }
 
-float tanh2(float x)
+double tanh2(double x)
 {
 	return tanh(x);
 }
 
-float tanh_prime(float x)
+double tanh_prime(double x)
 {
-	return 1.0f - powf(tanh(x), 2.0f);
+	return 1.0d - powf(tanh(x), 2.0d);
 }
 
-float relu(float x)
+double relu(double x)
 {
-	return std::max(x, 0.0f);
+	return std::max(x, 0.0d);
 }
 
-float relu_prime(float x)
+double relu_prime(double x)
 {
-	return (float)((int)(x >= 0));
+	return (double)((int)(x >= 0));
 }
 
-float one_minus(float x)
+double one_minus(double x)
 {
 	return 1 - x;
 }
 
-float mse(Matrix& y_true, Matrix& y_pred)
+double mse(Matrix& y_true, Matrix& y_pred)
 {
 	auto diff = (y_true - y_pred ) ;
 	return  (diff.eMul(diff)).mean();
@@ -52,7 +52,7 @@ Matrix mse_prime(Matrix& y_true, Matrix& y_pred)
 	return   ((y_pred - y_true)*2) * ( 1 / (y_true.Rows()*y_true.Cols()));
 }
 
-float binary_cross_entropy(Matrix& y_true, Matrix& y_pred)
+double binary_cross_entropy(Matrix& y_true, Matrix& y_pred)
 {
 	return  (-y_true * y_pred.log()).mean() - ((y_true.unaryExpr(one_minus)) * (y_pred.unaryExpr(one_minus)).log()).mean();
 }

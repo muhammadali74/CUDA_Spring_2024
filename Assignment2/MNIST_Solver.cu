@@ -152,7 +152,7 @@ int main()
 
 
     // nn.fit(x_train.block<1000,784>(0,0), y_train.block<1000,10>(0,0), epoch, 0.1f);
-    nn.fit(x_train.block(1000, 784, 0,0), y_train.block(1000, 10,0,0), epoch, 0.1f);
+    nn.fit(x_train.block(1000, 784, 0,0), y_train.block(1000, 10,0,0), epoch, 0.1d);
 
 
     //test
