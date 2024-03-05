@@ -6,7 +6,7 @@
 
 double sigmoid(double x)
 {
-	return 1.0d / 1.0d + exp(-x);
+	return 1.0 / 1.0 + exp(-x);
 }
 
 double sigmoid_prime(double x)
@@ -22,12 +22,12 @@ double tanh2(double x)
 
 double tanh_prime(double x)
 {
-	return 1.0d - powf(tanh(x), 2.0d);
+	return 1.0d - powf(tanh(x), 2.0);
 }
 
 double relu(double x)
 {
-	return std::max(x, 0.0d);
+	return std::max(x, 0.0);
 }
 
 double relu_prime(double x)
