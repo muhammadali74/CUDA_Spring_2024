@@ -22,7 +22,7 @@ cudaError_t gpuErrchk(cudaError_t result) {
 	return result;
 }
 
-__global__ void multiplyfloatKernel(float *data, float num, float *result, int rows, int cols) {
+__global__ void multiplydoubleKernel(double *data, double num, double *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
@@ -30,7 +30,7 @@ __global__ void multiplyfloatKernel(float *data, float num, float *result, int r
 	}
 }
 
-__global__ void addKernel(float *data, float *m, float *result, int rows, int cols) {
+__global__ void addKernel(double *data, double *m, double *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
@@ -38,7 +38,7 @@ __global__ void addKernel(float *data, float *m, float *result, int rows, int co
 	}
 }
 
-__global__ void addfloatKernel(float *data, float num, float *result, int rows, int cols) {
+__global__ void adddoubleKernel(double *data, double num, double *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
@@ -46,7 +46,7 @@ __global__ void addfloatKernel(float *data, float num, float *result, int rows, 
 	}
 }
 
-__global__ void subtractKernel(float *data, float *m, float *result, int rows, int cols) {
+__global__ void subtractKernel(double *data, double *m, double *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
@@ -54,7 +54,7 @@ __global__ void subtractKernel(float *data, float *m, float *result, int rows, i
 	}
 }
 
-__global__ void divideKernel(float *data, float *m, float *result, int rows, int cols) {
+__global__ void divideKernel(double *data, double *m, double *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
@@ -62,13 +62,13 @@ __global__ void divideKernel(float *data, float *m, float *result, int rows, int
 	}
 }
 
-__global__ void multiplyKernel(float *d_M, float *d_N, float *d_P, int rows, int cols, int mCols) {
+__global__ void multiplyKernel(double *d_M, double *d_N, double *d_P, int rows, int cols, int mCols) {
 		// Calculate the row index of the d_Pelement and d_M
 	int Row = blockIdx.y*blockDim.y+threadIdx.y;
 	// Calculate the column index of d_P and d_N
 	int Col = blockIdx.x*blockDim.x+threadIdx.x;
 	if ((Row < rows) && (Col < mCols)) {
-		float Pvalue = 0;
+		double Pvalue = 0;
 		// each thread computes one element of the block sub-matrix
 		for (int k = 0; k < cols; ++k) {
 			Pvalue += d_M[Row*cols +k]*d_N[k*cols+Col];
@@ -78,7 +78,7 @@ __global__ void multiplyKernel(float *d_M, float *d_N, float *d_P, int rows, int
 	}
 }
 
-__global__ void negateKernel(float *data, int rows, int cols) {
+__global__ void negateKernel(double *data, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
@@ -86,7 +86,7 @@ __global__ void negateKernel(float *data, int rows, int cols) {
 	}
 }
 
-__global__ void EmultiplyKernel(float *data, float *m, float *result, int rows, int cols) {
+__global__ void EmultiplyKernel(double *data, double *m, double *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
@@ -94,7 +94,7 @@ __global__ void EmultiplyKernel(float *data, float *m, float *result, int rows, 
 	}
 }
 
-__global__ void transposeKernel(float *data, float *result, int rows, int cols) {
+__global__ void transposeKernel(double *data, double *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
@@ -102,7 +102,7 @@ __global__ void transposeKernel(float *data, float *result, int rows, int cols) 
 	}
 }
 
-__global__ void randomKernel(float *result, int rows, int cols) {
+__global__ void randomKernel(double *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	curandState state;
@@ -116,10 +116,10 @@ __global__ void randomKernel(float *result, int rows, int cols) {
 class Matrix{
     public:
     int rows, cols;
-    float *data;
+    double *data;
 
     Matrix(int rows, int cols): rows(rows), cols(cols) {
-        data = new float[rows*cols];
+        data = new double[rows*cols];
     }
 
 	Matrix() {
@@ -128,16 +128,16 @@ class Matrix{
 		data = nullptr;
 	}
 
-	Matrix(int rows, int cols, float *data) : rows(rows), cols(cols), data(data) {
-		this->data = new float[rows*cols];
-		memcpy(this->data, data, rows*cols*sizeof(float));
+	Matrix(int rows, int cols, double *data) : rows(rows), cols(cols), data(data) {
+		this->data = new double[rows*cols];
+		memcpy(this->data, data, rows*cols*sizeof(double));
 	}
 
     // ~Matrix() {
     //     delete[] data;
     // }
 
-    float& operator()(int i, int j) {
+    double& operator()(int i, int j) {
 		if (i >= 0 && i < rows && j >= 0 && j < cols){
 		return data[i*cols + j];
 		}
@@ -146,7 +146,7 @@ class Matrix{
 		}
 	}
 
-	float operator()(int i, int j) const {
+	double operator()(int i, int j) const {
 		if (i >= 0 && i < rows && j >= 0 && j < cols){
 			return data[i*cols + j];
 		}
@@ -155,37 +155,37 @@ class Matrix{
 		}
 	}
 
-    Matrix operator *(const float& num) {
+    Matrix operator *(const double& num) {
 		Matrix result(rows, cols);
-		float *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(float));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *result_d;
-		cudaMalloc(&result_d, rows*cols*sizeof(float));
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		multiplyfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
+		multiplydoubleKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(result_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
 		return result;
 	}
 
 	Matrix operator +(const Matrix& m) {
 		Matrix result(rows, cols);
-		float *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(float));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *m_d;
-		cudaMalloc(&m_d, rows*cols*sizeof(float));
-		cudaMemcpy(m_d, m.data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *result_d;
-		cudaMalloc(&result_d, rows*cols*sizeof(float));
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, rows*cols*sizeof(double));
+		cudaMemcpy(m_d, m.data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
@@ -193,45 +193,45 @@ class Matrix{
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
 		return result;
 	}
 
-	Matrix operator +(const float& num) {
+	Matrix operator +(const double& num) {
 		Matrix result(rows, cols);
-		float *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(float));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *result_d;
-		cudaMalloc(&result_d, rows*cols*sizeof(float));
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		addfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
+		adddoubleKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(result_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
 		return result;
 	}
 
 	Matrix operator -(const Matrix& m) {
 		Matrix result(rows, cols);
-		float *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(float));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *m_d;
-		cudaMalloc(&m_d, rows*cols*sizeof(float));
-		cudaMemcpy(m_d, m.data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *result_d;
-		cudaMalloc(&result_d, rows*cols*sizeof(float));
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, rows*cols*sizeof(double));
+		cudaMemcpy(m_d, m.data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
@@ -239,19 +239,19 @@ class Matrix{
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
 		return result;
 	}
 
 	Matrix operator -() const {
 		Matrix result(rows, cols);
-		float *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(float));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
@@ -259,22 +259,22 @@ class Matrix{
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(result.data, data_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(result.data, data_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
 		return result;
 	
 	}
 
 	Matrix operator -=(const Matrix& m) {
-		float *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(float));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *m_d;
-		cudaMalloc(&m_d, rows*cols*sizeof(float));
-		cudaMemcpy(m_d, m.data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *result_d;
-		cudaMalloc(&result_d, rows*cols*sizeof(float));
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, rows*cols*sizeof(double));
+		cudaMemcpy(m_d, m.data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
@@ -282,11 +282,11 @@ class Matrix{
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
 		return *this;
 	}
 
@@ -296,14 +296,14 @@ class Matrix{
 			return *this;
 		}
 		Matrix result(rows, m.cols);
-		float *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(float));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *m_d;
-		cudaMalloc(&m_d, m.rows*m.cols*sizeof(float));
-		cudaMemcpy(m_d, m.data, m.rows*m.cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *result_d;
-		cudaMalloc(&result_d, rows*m.cols*sizeof(float));
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, m.rows*m.cols*sizeof(double));
+		cudaMemcpy(m_d, m.data, m.rows*m.cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*m.cols*sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((m.cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
@@ -311,11 +311,11 @@ class Matrix{
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(result.data, result_d, rows*m.cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(result.data, result_d, rows*m.cols*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
 		return result;
 	}
 
@@ -326,14 +326,14 @@ class Matrix{
 		}
 
 		Matrix result(rows, cols);
-		float *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(float));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *m_d;
-		cudaMalloc(&m_d, rows*cols*sizeof(float));
-		cudaMemcpy(m_d, m.data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *result_d;
-		cudaMalloc(&result_d, rows*cols*sizeof(float));
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, rows*cols*sizeof(double));
+		cudaMemcpy(m_d, m.data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
@@ -341,11 +341,11 @@ class Matrix{
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
 		return result;
 
 	}
@@ -356,14 +356,14 @@ class Matrix{
 			return *this;
 		}
 		Matrix result(rows, cols);
-		float *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(float));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *m_d;
-		cudaMalloc(&m_d, m.rows*m.cols*sizeof(float));
-		cudaMemcpy(m_d, m.data, m.rows*m.cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *result_d;
-		cudaMalloc(&result_d, rows*cols*sizeof(float));
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, m.rows*m.cols*sizeof(double));
+		cudaMemcpy(m_d, m.data, m.rows*m.cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
@@ -371,21 +371,21 @@ class Matrix{
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
 		return result;
 	}
 
 	Matrix transpose() {
 		Matrix result(cols, rows);
-		float *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(float));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(float), cudaMemcpyHostToDevice);
-		float *result_d;
-		cudaMalloc(&result_d, cols*rows*sizeof(float));
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, cols*rows*sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((rows + dimBlock.x - 1) / dimBlock.x, (cols + dimBlock.y - 1) / dimBlock.y);
 		
@@ -393,10 +393,10 @@ class Matrix{
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(result.data, result_d, cols*rows*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(result.data, result_d, cols*rows*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(result_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
 		return result;
 	}
 
@@ -408,8 +408,8 @@ class Matrix{
 
     static Matrix Random(int inputSize, int outputSize) {
         Matrix random(inputSize, outputSize);
-		float *result_d;
-		cudaMalloc(&result_d, inputSize*outputSize*sizeof(float));
+		double *result_d;
+		cudaMalloc(&result_d, inputSize*outputSize*sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((outputSize + dimBlock.x - 1) / dimBlock.x, (inputSize + dimBlock.y - 1) / dimBlock.y);
 
@@ -417,15 +417,15 @@ class Matrix{
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(random.data, result_d, inputSize*outputSize*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(random.data, result_d, inputSize*outputSize*sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(result_d);
-		cudaDeviceReset();
+		// cudaDeviceReset();
         return random;
     }
 
 	static Matrix Zero(int rowsize, int colsize){
 		Matrix zero(rowsize, colsize);
-		// memset(zero.data, 0, rowsize*colsize*sizeof(float));
+		// memset(zero.data, 0, rowsize*colsize*sizeof(double));
 		for (int i = 0; i < rowsize*colsize; i++) {
 			zero.data[i] = 0;
 		}
@@ -448,7 +448,7 @@ class Matrix{
 
 	Matrix row(int j){
 		Matrix result(1, cols);
-		memcpy(result.data, &data[j*cols], cols*sizeof(float));
+		memcpy(result.data, &data[j*cols], cols*sizeof(double));
 		return result;
 
 	}
@@ -464,7 +464,7 @@ class Matrix{
 
 	}
 
-	Matrix unaryExpr(std::function<float(float)> activation) {
+	Matrix unaryExpr(std::function<double(double)> activation) {
 		Matrix result(rows, cols);
 
 		for (int i = 0; i < rows*cols; i++) {
@@ -474,8 +474,8 @@ class Matrix{
 
 	}
 
-	float mean() {
-		float sum = 0;
+	double mean() {
+		double sum = 0;
 		for (int i = 0; i < rows*cols; i++) {
 			sum += data[i];
 		}
@@ -538,7 +538,7 @@ public:
 	virtual ~Layer() {}
 
 	virtual Matrix forwardPropagation(Matrix& input) = 0;
-	virtual Matrix backwardPropagation(Matrix& output, float learningRate) = 0;
+	virtual Matrix backwardPropagation(Matrix& output, double learningRate) = 0;
 
 protected:
 	Matrix input;
@@ -565,7 +565,7 @@ public:
 	}
 
 	//computes dE/dW, dE/dB for a given outputError = dE/dY. Returns input_error = dE/dX.
-	Matrix backwardPropagation(Matrix& outputError, float learningRate)
+	Matrix backwardPropagation(Matrix& outputError, double learningRate)
 	{
 		Matrix inputError = outputError * weights.transpose(); //calculates dE/dx 
 		Matrix weightsError = input.transpose() * outputError; //calculates dE/dW
@@ -586,8 +586,8 @@ private:
 class ActivationLayer : public Layer
 {
 public:
-	ActivationLayer(std::function<float(float)> activation,
-		std::function<float(float)> activationPrime)
+	ActivationLayer(std::function<double(double)> activation,
+		std::function<double(double)> activationPrime)
 	{
 		this->activation = activation;
 		this->activationPrime = activationPrime;
@@ -603,14 +603,14 @@ public:
 
 	//Returns inputRrror = dE / dX for a given output_error = dE / dY.
 	//learningRate is not used because there is no "learnable" parameters.
-	Matrix backwardPropagation(Matrix& outputError, float learningRate)
+	Matrix backwardPropagation(Matrix& outputError, double learningRate)
 	{ 
 		return (input.unaryExpr(activationPrime).eMul(outputError));
 	}
 
 private:
-	std::function<float(float)> activation;
-	std::function<float(float)> activationPrime;
+	std::function<double(double)> activation;
+	std::function<double(double)> activationPrime;
 };
 
 class FlattenLayer :public Layer
@@ -623,7 +623,7 @@ public:
 		this->output.resize(1, input.Rows() * input.Cols()); //flatten
 		return this->output;
 	}
-	Matrix backwardPropagation(Matrix& outputError, float learningRate)
+	Matrix backwardPropagation(Matrix& outputError, double learningRate)
 	{
 		outputError.resize(input.Rows(), input.Cols());
 		return outputError;
@@ -642,7 +642,7 @@ public:
 		cout << "Layer added" << endl;
 	}
 
-	void use(std::function<float(Matrix&, Matrix&)> lossF, std::function<Matrix(Matrix&, Matrix&)> lossDer)
+	void use(std::function<double(Matrix&, Matrix&)> lossF, std::function<Matrix(Matrix&, Matrix&)> lossDer)
 	{
 		loss = lossF;
 		lossPrime = lossDer;
@@ -669,7 +669,7 @@ public:
 
 
 	//train the network
-	virtual void fit(Matrix x_train, Matrix y_train, int epochs, float learningRate)
+	virtual void fit(Matrix x_train, Matrix y_train, int epochs, double learningRate)
 	{ 
 		int samples = x_train.Rows();
 		std::cout << "Samples: " << samples << std::endl;
@@ -682,7 +682,7 @@ public:
 		//training loop
 		for (int i = 0; i < epochs; ++i)
 		{
-			float err = 0.0f;
+			double err = 0.0f;
 
 			
 			//feed forward
@@ -709,14 +709,14 @@ public:
 					error = (*layer)->backwardPropagation(error, learningRate); 
 				 
 			}
-			err /= (float)samples;
+			err /= (double)samples;
 			std::cout << "Epoch " << (i + 1) << "/" << epochs << " error = " << err << std::endl;
 		}
 	}
 
 protected:
 	std::vector<Layer*> layers;
-	std::function<float(Matrix&, Matrix&)> loss;
+	std::function<double(Matrix&, Matrix&)> loss;
 	std::function<Matrix(Matrix&, Matrix&)> lossPrime;
 };
 #endif
