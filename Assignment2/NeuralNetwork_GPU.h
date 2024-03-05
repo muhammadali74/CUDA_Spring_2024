@@ -74,6 +74,7 @@ __global__ void multiplyKernel(float *d_M, float *d_N, float *d_P, int rows, int
 			Pvalue += d_M[Row*cols +k]*d_N[k*cols+Col];
 		}
 		d_P[Row*rows + Col] = Pvalue;
+		
 	}
 }
 
@@ -171,6 +172,7 @@ class Matrix{
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(result_d);
+		cudaDeviceReset();
 		return result;
 	}
 
@@ -195,6 +197,7 @@ class Matrix{
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
+		cudaDeviceReset();
 		return result;
 	}
 
@@ -215,6 +218,7 @@ class Matrix{
 		cudaMemcpy(result.data, result_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(result_d);
+		cudaDeviceReset();
 		return result;
 	}
 
@@ -239,6 +243,7 @@ class Matrix{
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
+		cudaDeviceReset();
 		return result;
 	}
 
@@ -256,6 +261,7 @@ class Matrix{
 
 		cudaMemcpy(result.data, data_d, rows*cols*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
+		cudaDeviceReset();
 		return result;
 	
 	}
@@ -280,6 +286,7 @@ class Matrix{
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
+		cudaDeviceReset();
 		return *this;
 	}
 
@@ -308,6 +315,7 @@ class Matrix{
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
+		cudaDeviceReset();
 		return result;
 	}
 
@@ -337,6 +345,7 @@ class Matrix{
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
+		cudaDeviceReset();
 		return result;
 
 	}
@@ -366,7 +375,7 @@ class Matrix{
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
-
+		cudaDeviceReset();
 		return result;
 	}
 
@@ -387,6 +396,7 @@ class Matrix{
 		cudaMemcpy(result.data, result_d, cols*rows*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(result_d);
+		cudaDeviceReset();
 		return result;
 	}
 
@@ -409,6 +419,7 @@ class Matrix{
 
 		cudaMemcpy(random.data, result_d, inputSize*outputSize*sizeof(float), cudaMemcpyDeviceToHost);
 		cudaFree(result_d);
+		cudaDeviceReset();
         return random;
     }
 
