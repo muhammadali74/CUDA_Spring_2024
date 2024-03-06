@@ -290,50 +290,21 @@ class Matrix{
 		return *this;
 	}
 
-	Matrix operator * (const Matrix& m) {
+		Matrix operator * (const Matrix& m) {
 		if (cols != m.rows) {
 			std::cout << "Invalid size" << std::endl;
 			return *this;
 		}
 		Matrix result(rows, m.cols);
 		
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < m.cols; j++) {
-				for (int k = 0; k < cols; k++) {
-					result(i, j) += data[i*cols + k] * m(k, j);
-				}
-			}
-		}
+		// for (int i = 0; i < rows; i++) {
+		// 	for (int j = 0; j < m.cols; j++) {
+		// 		for (int k = 0; k < cols; k++) {
+		// 			result(i, j) += data[i*cols + k] * m(k, j);
+		// 		}
+		// 	}
+		// }
 		
-		// double *data_d;
-		// cudaMalloc(&data_d, rows*cols*sizeof(double));
-		// cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
-		// double *m_d;
-		// cudaMalloc(&m_d, m.rows*m.cols*sizeof(double));
-		// cudaMemcpy(m_d, m.data, m.rows*m.cols*sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows*m.cols*sizeof(double));
-		// dim3 dimBlock(16, 16);
-		// dim3 dimGrid((m.cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
-
-		// multiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols, m.cols);
-		// cudaDeviceSynchronize();
-		// gpuErrchk(cudaGetLastError());
-
-		// cudaMemcpy(result.data, result_d, rows*m.cols*sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(m_d);
-		// cudaFree(result_d);
-		// // cudaDeviceReset();
-		return result;
-	}
-
-	Matrix dot(const Matrix& m) {
-		if (cols != m.rows) {
-			std::cout << "Invalid size" << std::endl;
-			return *this;
-		}
-		Matrix result(rows, m.cols);	
 		double *data_d;
 		cudaMalloc(&data_d, rows*cols*sizeof(double));
 		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
@@ -355,8 +326,37 @@ class Matrix{
 		cudaFree(result_d);
 		// cudaDeviceReset();
 		return result;
-
 	}
+
+	// Matrix dot(const Matrix& m) {
+	// 	if (cols != m.rows) {
+	// 		std::cout << "Invalid size" << std::endl;
+	// 		return *this;
+	// 	}
+	// 	Matrix result(rows, m.cols);	
+	// 	double *data_d;
+	// 	cudaMalloc(&data_d, rows*cols*sizeof(double));
+	// 	cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+	// 	double *m_d;
+	// 	cudaMalloc(&m_d, m.rows*m.cols*sizeof(double));
+	// 	cudaMemcpy(m_d, m.data, m.rows*m.cols*sizeof(double), cudaMemcpyHostToDevice);
+	// 	double *result_d;
+	// 	cudaMalloc(&result_d, rows*m.cols*sizeof(double));
+	// 	dim3 dimBlock(16, 16);
+	// 	dim3 dimGrid((m.cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+
+	// 	multiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols, m.cols);
+	// 	cudaDeviceSynchronize();
+	// 	gpuErrchk(cudaGetLastError());
+
+	// 	cudaMemcpy(result.data, result_d, rows*m.cols*sizeof(double), cudaMemcpyDeviceToHost);
+	// 	cudaFree(data_d);
+	// 	cudaFree(m_d);
+	// 	cudaFree(result_d);
+	// 	// cudaDeviceReset();
+	// 	return result;
+
+	// }
 
 	Matrix operator / (const Matrix& m) {
 		if (rows != m.rows || cols != m.cols) {
