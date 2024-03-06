@@ -560,18 +560,18 @@ public:
 	DenseLayer(int inputSize, int outputSize)
 	{
 		//Eigen::MatrixXf::Random returns values from [-1,1] we should scale it to [-0.5,0.5]
-		weights = Matrix::Random(inputSize, outputSize) * 0.5f;
+		weights = Matrix::Random(inputSize, outputSize) * 0.5;
 		// weights = Eigen::MatrixXf::Random(inputSize, outputSize).array() * 0.5f;
-		bias = Matrix::Random(1, outputSize) * 0.5f;
+		bias = Matrix::Random(1, outputSize) * 0.5;
 		// bias = Eigen::MatrixXf::Random(1, outputSize).array() * 0.5f; 
 	}
 
 	Matrix forwardPropagation(Matrix& input)
 	{
 		this->input = input; 
-		Matrix iden = Matrix::Zero(weights.Rows(), weights.Cols());
-		cout << iden;
-		this->output = input * iden; // weights + bias;
+		// Matrix iden = Matrix::Zero(weights.Rows(), weights.Cols());
+		// cout << iden;
+		this->output = input * weights + bias;
 		cout << output;
 		return this->output;
 	}
@@ -694,7 +694,7 @@ public:
 		//training loop
 		for (int i = 0; i < epochs; ++i)
 		{
-			double err = 0.0f;
+			double err = 0.0;
 
 			
 			//feed forward

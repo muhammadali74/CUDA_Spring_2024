@@ -75,7 +75,7 @@ void input(std::string ipath, std::string lpath, std::string ipath2, std::string
             for (int y = 0; y < cols; y++)
             {
                 image[i][x][y] = in(icin, 1);
-                x_train(i, val) = image[i][x][y] / 255.0f;
+                x_train(i, val) = image[i][x][y] / 255.0;
                 val++;
             }
         }
@@ -103,7 +103,7 @@ void input(std::string ipath, std::string lpath, std::string ipath2, std::string
             for (int y = 0; y < cols; y++)
             {
                 val_image[i][x][y] = in(icin, 1);
-                x_valid(i, val) = val_image[i][x][y] / 255.0f;
+                x_valid(i, val) = val_image[i][x][y] / 255.0;
                 val++;
             }
         }
