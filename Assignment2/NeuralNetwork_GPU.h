@@ -342,7 +342,7 @@ class Matrix{
 		// cudaFree(m_d);
 		// cudaFree(result_d);
 		// // cudaDeviceReset();
-		// return result;
+		return result;
 	}
 
 	Matrix operator / (const Matrix& m) {
