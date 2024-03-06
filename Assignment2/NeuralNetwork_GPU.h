@@ -71,7 +71,7 @@ __global__ void multiplyKernel(double *d_M, double *d_N, double *d_P, int rows, 
 		double Pvalue = 0;
 		// each thread computes one element of the block sub-matrix
 		for (int k = 0; k < cols; ++k) {
-			Pvalue += d_M[Row*cols +k]*d_N[k*cols+Col];
+			Pvalue += d_M[Row*cols +k]*d_N[k*mCols+Col];
 		}
 		d_P[Row*mCols + Col] = Pvalue;
 		
