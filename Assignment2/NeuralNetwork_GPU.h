@@ -30,6 +30,14 @@ __global__ void multiplyfloatKernel(double *data, double num, double *result, in
 	}
 }
 
+__global__ void dividefloatKernel(double *data, double num, double *result, int rows, int cols) {
+	int row = blockIdx.y * blockDim.y + threadIdx.y;
+	int col = blockIdx.x * blockDim.x + threadIdx.x;
+	if (row < rows && col < cols) {
+		result[row*cols + col] = data[row*cols + col] / num;
+	}
+}
+
 __global__ void addKernel(double *data, double *m, double *result, int rows, int cols) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -134,7 +142,7 @@ class Matrix{
 	}
 
     // ~Matrix() {
-    //     delete[] data;
+    //     delete[]   data;
     // }
 
     double& operator()(int i, int j) {
@@ -401,6 +409,27 @@ class Matrix{
 
 	}
 
+	Matrix operator /(double num) {
+		Matrix result(rows, cols);
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
+		dim3 dimBlock(16, 16);
+		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+
+		dividefloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
+		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
+
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(result_d);
+		// cudaDeviceReset();
+		return result;
+	}
+
 	Matrix eMul(Matrix& m) {
 		if (rows != m.rows || cols != m.cols) {
 			std::cout << "Invalid size" << std::endl;
@@ -633,6 +662,8 @@ public:
 		Matrix inputError = outputError * weights.transpose(); //calculates dE/dx 
 		Matrix weightsError = input.transpose() * outputError; //calculates dE/dW
 
+
+
 		//update parameters
 		weights -= weightsError * learningRate;
 		bias -= outputError * learningRate; 
@@ -767,6 +798,7 @@ public:
 				
 				//backward propagation 
 				Matrix error = lossPrime(y, output); 
+				
 
 				for (std::vector<Layer*>::reverse_iterator layer = layers.rbegin(); layer != layers.rend(); ++layer) 
 					error = (*layer)->backwardPropagation(error, learningRate); 

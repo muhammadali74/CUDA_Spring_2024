@@ -49,7 +49,7 @@ double mse(Matrix& y_true, Matrix& y_pred)
 
 Matrix mse_prime(Matrix& y_true, Matrix& y_pred)
 {
-	return   ((y_pred - y_true)*2) * ( 1 / (y_true.Rows()*y_true.Cols()));
+	return  ((y_pred - y_true)*2) / ( (y_true.Rows()*y_true.Cols())*1.0);
 }
 
 double binary_cross_entropy(Matrix& y_true, Matrix& y_pred)
