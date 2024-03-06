@@ -177,6 +177,10 @@ class Matrix{
 	}
 
 	Matrix operator +(const Matrix& m) {
+		if (rows != m.rows || cols != m.cols) {
+			std::cout << "Invalid size" << std::endl;
+			return *this;
+		}
 		Matrix result(rows, cols);
 		double *data_d;
 		cudaMalloc(&data_d, rows*cols*sizeof(double));
@@ -223,6 +227,10 @@ class Matrix{
 	}
 
 	Matrix operator -(const Matrix& m) {
+		if (rows != m.rows || cols != m.cols) {
+			std::cout << "Invalid size" << std::endl;
+			return *this;
+		}
 		Matrix result(rows, cols);
 		double *data_d;
 		cudaMalloc(&data_d, rows*cols*sizeof(double));
@@ -267,6 +275,10 @@ class Matrix{
 	}
 
 	Matrix operator -=(const Matrix& m) {
+		if (rows != m.rows || cols != m.cols) {
+			std::cout << "Invalid size" << std::endl;
+			return *this;
+		}
 		double *data_d;
 		cudaMalloc(&data_d, rows*cols*sizeof(double));
 		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
