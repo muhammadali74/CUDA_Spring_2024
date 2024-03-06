@@ -19,7 +19,7 @@ public:
 	virtual ~Layer() {}
 
 	virtual Eigen::MatrixXf forwardPropagation(Eigen::MatrixXf& input) = 0;
-	virtual Eigen::MatrixXf backwardPropagation(Eigen::MatrixXf& output, float learningRate) = 0;
+	virtual Eigen::MatrixXf backwardPropagation(Eigen::MatrixXf& output, double learningRate) = 0;
 
 protected:
 	Eigen::MatrixXf input;
@@ -32,8 +32,8 @@ public:
 	DenseLayer(int inputSize, int  outputSize)
 	{
 		//Eigen::MatrixXf::Random returns values from [-1,1] we should scale it to [-0.5,0.5]
-		weights = Eigen::MatrixXf::Random(inputSize, outputSize).array() * 0.5f;
-		bias = Eigen::MatrixXf::Random(1, outputSize).array() * 0.5f; 
+		weights = Eigen::MatrixXf::Random(inputSize, outputSize).array() * 0.5;
+		bias = Eigen::MatrixXf::Random(1, outputSize).array() * 0.5; 
 	}
 
 	Eigen::MatrixXf forwardPropagation(Eigen::MatrixXf& input)
@@ -44,7 +44,7 @@ public:
 	}
 
 	//computes dE/dW, dE/dB for a given outputError = dE/dY. Returns input_error = dE/dX.
-	Eigen::MatrixXf backwardPropagation(Eigen::MatrixXf& outputError, float learningRate)
+	Eigen::MatrixXf backwardPropagation(Eigen::MatrixXf& outputError, double learningRate)
 	{
 		Eigen::MatrixXf inputError = outputError * weights.transpose(); //calculates dE/dx 
 		Eigen::MatrixXf weightsError = input.transpose() * outputError; //calculates dE/dW
@@ -64,8 +64,8 @@ private:
 class ActivationLayer : public Layer
 {
 public:
-	ActivationLayer(std::function<float(float)> activation,
-		std::function<float(float)> activationPrime)
+	ActivationLayer(std::function<double(double)> activation,
+		std::function<double(double)> activationPrime)
 	{
 		this->activation = activation;
 		this->activationPrime = activationPrime;
@@ -81,14 +81,14 @@ public:
 
 	//Returns inputRrror = dE / dX for a given output_error = dE / dY.
 	//learningRate is not used because there is no "learnable" parameters.
-	Eigen::MatrixXf backwardPropagation(Eigen::MatrixXf& outputError, float learningRate)
+	Eigen::MatrixXf backwardPropagation(Eigen::MatrixXf& outputError, double learningRate)
 	{ 
 		return (input.unaryExpr(activationPrime).array() * outputError.array()).matrix();
 	}
 
 private:
-	std::function<float(float)> activation;
-	std::function<float(float)> activationPrime;
+	std::function<double(double)> activation;
+	std::function<double(double)> activationPrime;
 };
 
 class FlattenLayer :public Layer
@@ -101,7 +101,7 @@ public:
 		this->output.resize(1, input.rows() * input.cols()); //flatten
 		return this->output;
 	}
-	Eigen::MatrixXf backwardPropagation(Eigen::MatrixXf& outputError, float learningRate)
+	Eigen::MatrixXf backwardPropagation(Eigen::MatrixXf& outputError, double learningRate)
 	{
 		outputError.resize(input.rows(), input.cols());
 		return outputError;
@@ -119,7 +119,7 @@ public:
 		layers.push_back(layer);
 	}
 
-	void use(std::function<float(Eigen::MatrixXf&, Eigen::MatrixXf&)> lossF, std::function<Eigen::MatrixXf(Eigen::MatrixXf&, Eigen::MatrixXf&)> lossDer)
+	void use(std::function<double(Eigen::MatrixXf&, Eigen::MatrixXf&)> lossF, std::function<Eigen::MatrixXf(Eigen::MatrixXf&, Eigen::MatrixXf&)> lossDer)
 	{
 		loss = lossF;
 		lossPrime = lossDer;
@@ -145,7 +145,7 @@ public:
 	}
 
 	//train the network
-	virtual void fit(Eigen::MatrixXf x_train, Eigen::MatrixXf y_train, int epochs, float learningRate)
+	virtual void fit(Eigen::MatrixXf x_train, Eigen::MatrixXf y_train, int epochs, double learningRate)
 	{ 
 		int samples = x_train.rows();
 		std::cout << "Samples: " << samples << std::endl;
@@ -158,7 +158,7 @@ public:
 		//training loop
 		for (int i = 0; i < epochs; ++i)
 		{
-			float err = 0.0f;
+			double err = 0.0f;
 			
 			//feed forward
 			std::random_shuffle(order.begin(), order.end());
@@ -184,14 +184,14 @@ public:
 					error = (*layer)->backwardPropagation(error, learningRate); 
 				 
 			}
-			err /= (float)samples;
+			err /= (double)samples;
 			std::cout << "Epoch " << (i + 1) << "/" << epochs << " error = " << err << std::endl;
 		}
 	}
 
 protected:
 	std::vector<Layer*> layers;
-	std::function<float(Eigen::MatrixXf&, Eigen::MatrixXf&)> loss;
+	std::function<double(Eigen::MatrixXf&, Eigen::MatrixXf&)> loss;
 	std::function<Eigen::MatrixXf(Eigen::MatrixXf&, Eigen::MatrixXf&)> lossPrime;
 };
 #endif
