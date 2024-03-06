@@ -11,10 +11,10 @@ int main()
 	// Eigen::MatrixXf x_train{ {0, 0}, {0, 1}, {1, 0}, {1,1} };
 	// Eigen::MatrixXf y_train{ {0}, {1}, {1}, {0} };
 	Matrix x_train(4, 2);
-	float xtrain[] = { 0, 0, 0, 1, 1, 0, 1, 1 };
+	double xtrain[] = { 0, 0, 0, 1, 1, 0, 1, 1 };
 	x_train.data = xtrain;
 	Matrix y_train(4, 1);
-	float ytrain[] = { 0, 1, 1, 0 };
+	double ytrain[] = { 0, 1, 1, 0 };
 	y_train.data = ytrain;
 
 	Network nn;

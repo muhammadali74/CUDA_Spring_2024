@@ -22,7 +22,7 @@ double tanh2(double x)
 
 double tanh_prime(double x)
 {
-	return 1.0d - powf(tanh(x), 2.0);
+	return 1.0 - powf(tanh(x), 2.0);
 }
 
 double relu(double x)
