@@ -157,7 +157,7 @@ int main()
 
     //test
     // std::vector<Matrix> output = nn.predict(x_valid(Eigen::seq(0, 2), Eigen::indexing::all));
-    std::vector<Matrix> output = nn.predict(x_valid(0, 2, 0, 783));
+    std::vector<Matrix> output = nn.predict(x_valid(0, 3, 0, 784));
 
     std::cout << "Predicted values: " << std::endl;
     for (Matrix out : output)
@@ -179,7 +179,7 @@ int main()
 
 
     // auto top3 = y_valid(Eigen::seq(0, 2), Eigen::indexing::all);
-    auto top3 = y_valid.block(0, 2, 0, 9);
+    auto top3 = y_valid(0, 3, 0, 10);
     for (int i = 0; i < top3.Rows(); ++i)
     {
         //std::cout << top3.row(i) << std::endl;
