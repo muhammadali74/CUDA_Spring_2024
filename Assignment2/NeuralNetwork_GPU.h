@@ -121,6 +121,8 @@ __global__ void randomKernel(double *result, int rows, int cols) {
 	}
 }
 
+
+
 class Matrix{
     public:
     int rows, cols;
@@ -141,9 +143,38 @@ class Matrix{
 		memcpy(this->data, data, rows*cols*sizeof(double));
 	}
 
-    // ~Matrix() {
-    //     delete[]   data;
-    // }
+    ~Matrix() {
+        delete[]   data;
+		    data = nullptr;
+    }
+
+	Matrix(const Matrix& other) : rows(other.rows), cols(other.cols) {
+        data = new double[rows * cols]; // Allocate memory for new object
+        // for (int i = 0; i < rows * cols; ++i) {
+        //     data[i] = other.data[i]; // Copy elements
+        // }
+		memcpy(data, other.data, rows*cols*sizeof(double));
+        
+    }
+
+    // Assignment operator
+    Matrix& operator=(const Matrix& other) {
+        if (this != &other) { // Avoid self-assignment
+            // Deallocate memory if already allocated
+            delete[] data;
+            data = nullptr;
+
+            rows = other.rows;
+            cols = other.cols;
+
+            data = new double[rows * cols]; // Allocate memory for new size
+            // for (int i = 0; i < rows * cols; ++i) {
+            //     data[i] = other.data[i]; // Copy elements
+            // }
+			memcpy(data, other.data, rows*cols*sizeof(double));
+        }
+        return *this; // Return a reference to the modified object
+    }
 
     double& operator()(int i, int j) {
 		if (i >= 0 && i < rows && j >= 0 && j < cols){
@@ -590,6 +621,8 @@ class Matrix{
 		return result;
 	}
 
+	
+
 	// static Matrix identity(int rows, int cols) {
 	// 	Matrix iden(rows, cols);
 	// 	memset(iden.data, 0, rows*cols*sizeof(double));
@@ -611,6 +644,10 @@ ostream& operator << (std::ostream& os, Matrix &m) {
 		}
 		return os;
 	}
+
+
+
+
 
 void printMatrixSize(const std::string msg, Matrix& m) {
 	std::cout << msg.c_str() << "[" << m.Rows() << "," << m.Cols() << "]" << std::endl;
