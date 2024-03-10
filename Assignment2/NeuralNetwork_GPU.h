@@ -14,7 +14,7 @@
 #include <functional>
 
 #include <nvfunctional>
-// #include "ActivationAndLoss_GPU.h"
+#include "ActivationFunctions_device.h"
 
 using namespace std;
 
