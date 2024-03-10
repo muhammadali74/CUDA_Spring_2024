@@ -22,30 +22,35 @@
 
 using namespace std;
 
-void saveVectorsToTxt(const std::string& filename, const std::vector<int>& epochs, const std::vector<double>& losses) {
-  if (epochs.size() != losses.size()) {
-    std::cerr << "Error: Epoch and loss vectors have different sizes." << std::endl;
-    return;
-  }
+void saveVectorsToTxt(const std::string &filename, const std::vector<int> &epochs, const std::vector<double> &losses)
+{
+	if (epochs.size() != losses.size())
+	{
+		std::cerr << "Error: Epoch and loss vectors have different sizes." << std::endl;
+		return;
+	}
 
-  // Open the file for writing
-  std::ofstream outfile(filename);
-  if (!outfile.is_open()) {
-    std::cerr << "Error: Could not open file " << filename << std::endl;
-    return;
-  }
+	// Open the file for writing
+	std::ofstream outfile(filename);
+	if (!outfile.is_open())
+	{
+		std::cerr << "Error: Could not open file " << filename << std::endl;
+		return;
+	}
 
-  // Write each data point (epoch, loss) to a new line
-  for (int i = 0; i < epochs.size(); ++i) {
-    outfile << epochs[i] << "\t" << std::endl;
-  }
-  
-  for (int i = 0; i < epochs.size(); ++i) {
-    outfile << losses[i] << "\t" << std::endl;
-  }
+	// Write each data point (epoch, loss) to a new line
+	for (int i = 0; i < epochs.size(); ++i)
+	{
+		outfile << epochs[i] << "\t" << std::endl;
+	}
 
-  outfile.close();
-  std::cout << "Data saved to file: " << filename << std::endl;
+	for (int i = 0; i < epochs.size(); ++i)
+	{
+		outfile << losses[i] << "\t" << std::endl;
+	}
+
+	outfile.close();
+	std::cout << "Data saved to file: " << filename << std::endl;
 }
 
 cudaError_t gpuErrchk(cudaError_t result)
@@ -345,13 +350,13 @@ public:
 		}
 		Matrix result(rows, cols);
 		double *data_d;
-		cudaMalloc(&data_d, rows*cols*sizeof(double));
-		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
 		double *m_d;
-		cudaMalloc(&m_d, rows*cols*sizeof(double));
-		cudaMemcpy(m_d, m.data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		cudaMalloc(&m_d, rows * cols * sizeof(double));
+		cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
 		double *result_d;
-		cudaMalloc(&result_d, rows*cols*sizeof(double));
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
@@ -359,7 +364,7 @@ public:
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
+		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(data_d);
 		cudaFree(m_d);
 		cudaFree(result_d);
@@ -941,7 +946,7 @@ public:
 		std::vector<int> epochvec(epochs);
 		std::vector<double> trainLoss(epochs);
 
-		std::iota(epochvec.begin(), epochvec.end(), 0);
+		std::iota(myVector.begin(), myVector.end(), 0);
 
 		// training loop
 		for (int i = 0; i < epochs; ++i)
