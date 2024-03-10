@@ -15,6 +15,9 @@
 
 #include <nvfunctional>
 #include "ActivationFunctions_device.h"
+#include "matplotlibcpp.h"
+
+using namespace plt = matplotlibcpp;
 
 using namespace std;
 
@@ -314,30 +317,27 @@ public:
 			return *this;
 		}
 		Matrix result(rows, cols);
-		// double *data_d;
-		// cudaMalloc(&data_d, rows*cols*sizeof(double));
-		// cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
-		// double *m_d;
-		// cudaMalloc(&m_d, rows*cols*sizeof(double));
-		// cudaMemcpy(m_d, m.data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows*cols*sizeof(double));
-		// dim3 dimBlock(16, 16);
-		// dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, rows*cols*sizeof(double));
+		cudaMemcpy(m_d, m.data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
+		dim3 dimBlock(16, 16);
+		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		// addKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
-		// cudaDeviceSynchronize();
-		// gpuErrchk(cudaGetLastError());
+		addKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
-		// cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(m_d);
-		// cudaFree(result_d);
-		// cudaDeviceReset();
-		for (int i = 0; i < rows * cols; i++)
-		{
-			result.data[i] = data[i] + m.data[i];
-		}
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(m_d);
+		cudaFree(result_d);
+		cudaDeviceReset();
+
 		return result;
 	}
 
@@ -452,38 +452,27 @@ public:
 		}
 		Matrix result(rows, m.cols);
 
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *m_d;
-		// cudaMalloc(&m_d, m.rows * m.cols * sizeof(double));
-		// cudaMemcpy(m_d, m.data, m.rows * m.cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * m.cols * sizeof(double));
-		// dim3 dimBlock(16, 16);
-		// dim3 dimGrid((m.cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, m.rows * m.cols * sizeof(double));
+		cudaMemcpy(m_d, m.data, m.rows * m.cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * m.cols * sizeof(double));
+		dim3 dimBlock(16, 16);
+		dim3 dimGrid((m.cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		// multiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols, m.cols);
-		// cudaDeviceSynchronize();
-		// gpuErrchk(cudaGetLastError());
+		multiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols, m.cols);
+		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
 
-		// cudaMemcpy(result.data, result_d, rows * m.cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(m_d);
-		// cudaFree(result_d);
-		// // cudaDeviceReset();
-		for (int i = 0; i < rows; i++)
-		{
-			for (int j = 0; j < m.cols; j++)
-			{
-				double sum = 0;
-				for (int k = 0; k < cols; k++)
-				{
-					sum += data[i * cols + k] * m.data[k * m.cols + j];
-				}
-				result.data[i * m.cols + j] = sum;
-			}
-		}
+		cudaMemcpy(result.data, result_d, rows * m.cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(m_d);
+		cudaFree(result_d);
+		// cudaDeviceReset();
+
 		return result;
 	}
 
@@ -922,6 +911,11 @@ public:
 		std::vector<int> order(samples);
 		std::iota(order.begin(), order.end(), 0);
 
+		std::vector<int> epochvec(epochs);
+		std::vector<int> trainLoss(epochs);
+
+		std::iota(myVector.begin(), myVector.end(), 0);
+
 		// training loop
 		for (int i = 0; i < epochs; ++i)
 		{
@@ -951,8 +945,19 @@ public:
 					error = (*layer)->backwardPropagation(error, learningRate);
 			}
 			err /= (double)samples;
+			trainLoss.push_back(err);
 			std::cout << "Epoch " << (i + 1) << "/" << epochs << " error = " << err << std::endl;
 		}
+		 plt::figure(); // declare a new figure (optional if only one is used)
+
+			// plt::plot(epochvec, trainLoss);                        // automatic coloring: tab:blue
+			plt::plot(epochcec, trainLoss, {{"epoch", "Loss"}}); // legend label "log(x)"
+
+			// plt::xlim(0, 1000 * 1000);    // x-axis interval: [0, 1e6]
+			plt::title("Train Loss"); // set a title
+			plt::legend();                // enable the legend
+
+			plt::savefig("standard.pdf"); // save the figure
 	}
 
 protected:

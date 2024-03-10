@@ -8,6 +8,7 @@
 
 #include <numeric> //std::iota
 
+
 #include "NeuralNetwork_GPU.h"
 #include "ActivationAndLoss_GPU.h"
 
