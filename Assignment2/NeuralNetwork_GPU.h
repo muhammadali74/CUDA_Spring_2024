@@ -2,8 +2,6 @@
 #define NEURAL_NET_INC
 #pragma once
 
-
-
 #include <nvfunctional>
 #include "ActivationFunctions_device.h"
 #include "Matrix.h"
@@ -13,8 +11,6 @@ using namespace std;
 // saves losses to txt file
 void saveVectorsToTxt(const std::string &filename, const std::vector<int> &epochs, const std::vector<double> &losses, const std::vector<double> &valloss)
 {
-
-
 	// Open the file for writing
 	std::ofstream outfile(filename);
 	if (!outfile.is_open())

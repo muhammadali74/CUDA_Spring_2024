@@ -137,6 +137,11 @@ int main()
           "data/t10k-images-idx3-ubyte",
           "data/t10k-labels-idx1-ubyte");
 
+    x_train.deviceSynchronize();
+    y_train.deviceSynchronize();
+    x_valid.deviceSynchronize();
+    y_valid.deviceSynchronize();
+
     Network nn;
     nn.add(new DenseLayer(28 * 28, 100));
     nn.add(new ActivationLayer(0, 1));
