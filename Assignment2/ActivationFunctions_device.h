@@ -52,6 +52,7 @@ __device__ double one_minus(double x)
 {
 	return 1 - x;
 }
+
 }
 
 #endif

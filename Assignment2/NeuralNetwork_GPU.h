@@ -12,41 +12,12 @@
 #include <curand_kernel.h>
 #include <algorithm>
 #include <functional>
-#include <fstream>
 
 #include <nvfunctional>
 #include "ActivationFunctions_device.h"
-// #include "matplotlibcpp.h"
 
-// using namespace plt = matplotlibcpp;
 
 using namespace std;
-
-void saveVectorsToTxt(const std::string& filename, const std::vector<int>& epochs, const std::vector<double>& losses) {
-  if (epochs.size() != losses.size()) {
-    std::cerr << "Error: Epoch and loss vectors have different sizes." << std::endl;
-    return;
-  }
-
-  // Open the file for writing
-  std::ofstream outfile(filename);
-  if (!outfile.is_open()) {
-    std::cerr << "Error: Could not open file " << filename << std::endl;
-    return;
-  }
-
-  // Write each data point (epoch, loss) to a new line
-  for (int i = 0; i < epochs.size(); ++i) {
-    outfile << epochs[i] << "\t" << std::endl;
-  }
-  
-  for (int i = 0; i < epochs.size(); ++i) {
-    outfile << losses[i] << "\t" << std::endl;
-  }
-
-  outfile.close();
-  std::cout << "Data saved to file: " << filename << std::endl;
-}
 
 cudaError_t gpuErrchk(cudaError_t result)
 {
@@ -938,11 +909,6 @@ public:
 		std::vector<int> order(samples);
 		std::iota(order.begin(), order.end(), 0);
 
-		std::vector<int> epochvec(epochs);
-		std::vector<double> trainLoss(epochs);
-
-		std::iota(epochvec.begin(), epochvec.end(), 0);
-
 		// training loop
 		for (int i = 0; i < epochs; ++i)
 		{
@@ -972,20 +938,8 @@ public:
 					error = (*layer)->backwardPropagation(error, learningRate);
 			}
 			err /= (double)samples;
-			trainLoss.push_back(err);
 			std::cout << "Epoch " << (i + 1) << "/" << epochs << " error = " << err << std::endl;
 		}
-		saveVectorsToTxt("epochs.txt", epochvec, trainLoss);
-		//  plt::figure(); // declare a new figure (optional if only one is used)
-
-		// 	// plt::plot(epochvec, trainLoss);                        // automatic coloring: tab:blue
-		// 	plt::plot(epochcec, trainLoss, {{"epoch", "Loss"}}); // legend label "log(x)"
-
-		// 	// plt::xlim(0, 1000 * 1000);    // x-axis interval: [0, 1e6]
-		// 	plt::title("Train Loss"); // set a title
-		// 	plt::legend();                // enable the legend
-
-		// 	plt::savefig("standard.pdf"); // save the figure
 	}
 
 protected:
