@@ -132,11 +132,11 @@ __global__ void logKernel(double *data_d, double *result, int rows, int cols) {
 	}
 }
 
-__global__ void unaryExprKernel(double *data, double *result, int rows, int cols, const nvstd::function<double(double)> activation) {
+__global__ void unaryExprKernel(double *data, double *result, int rows, int cols, const nvstd::function<double(double)> &activation) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
-		result[row*cols + col] = activation(data[row*cols + col]);
+		result[row*cols + col] = invoker(activation, data[row*cols + col]);
 	}
 }
 
