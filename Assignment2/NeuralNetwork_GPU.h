@@ -13,6 +13,9 @@
 #include <algorithm>
 #include <functional>
 
+#include <nvfunctional>
+// #include "ActivationAndLoss_GPU.h"
+
 using namespace std;
 
 cudaError_t gpuErrchk(cudaError_t result) {
@@ -129,7 +132,17 @@ __global__ void logKernel(double *data_d, double *result, int rows, int cols) {
 	}
 }
 
+__global__ void unaryExprKernel(double *data, double *result, int rows, int cols, const nvstd::function<double(double)> activation) {
+	int row = blockIdx.y * blockDim.y + threadIdx.y;
+	int col = blockIdx.x * blockDim.x + threadIdx.x;
+	if (row < rows && col < cols) {
+		result[row*cols + col] = activation(data[row*cols + col]);
+	}
+}
 
+__host__ __device__ double invoker(const nvstd::function<double(double)> &in, double x) { 
+  	return in(x); 
+}
 
 class Matrix{
     public:
@@ -583,12 +596,30 @@ class Matrix{
 
 	}
 
-	Matrix unaryExpr(std::function<double(double)> activation) {
+	Matrix unaryExpr(const nvstd::function<double(double)> &activation) {
 		Matrix result(rows, cols);
 
-		for (int i = 0; i < rows*cols; i++) {
-			result.data[i] = activation(data[i]);
-		}
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
+		dim3 dimBlock(16, 16);
+		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+
+		unaryExprKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols, activation);
+
+		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
+
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(result_d);
+		// for (int i = 0; i < rows*cols; i++) {
+		// 	result.data[i] = activation(data[i]);
+		// 	cout << "tis sigmoid" << endl;
+		// }
+
 		return result;
 
 	}
@@ -644,19 +675,12 @@ class Matrix{
 		return result;
 	}
 
-	
 
-	// static Matrix identity(int rows, int cols) {
-	// 	Matrix iden(rows, cols);
-	// 	memset(iden.data, 0, rows*cols*sizeof(double));
-	// 	for (int i = 0; i < rows; i++) {
-	// 		iden(i, i) = 1.0;
-	// 	}
-	// 	return iden;
-	// }
 
 
 };
+
+
 
 ostream& operator << (std::ostream& os, Matrix &m) {
 		for (int i = 0; i < m.rows; i++) {
@@ -740,8 +764,8 @@ private:
 class ActivationLayer : public Layer
 {
 public:
-	ActivationLayer(std::function<double(double)> activation,
-		std::function<double(double)> activationPrime)
+	ActivationLayer(nvstd::function<double(double)> activation,
+		nvstd::function<double(double)> activationPrime)
 	{
 		this->activation = activation;
 		this->activationPrime = activationPrime;
@@ -763,8 +787,8 @@ public:
 	}
 
 private:
-	std::function<double(double)> activation;
-	std::function<double(double)> activationPrime;
+	nvstd::function<double(double)> activation;
+	nvstd::function<double(double)> activationPrime;
 };
 
 class FlattenLayer :public Layer
