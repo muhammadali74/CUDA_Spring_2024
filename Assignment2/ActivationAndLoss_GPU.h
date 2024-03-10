@@ -7,21 +7,21 @@
 
 using namespace std;
 
-double sigmoid(double x)
-{
-	return 1.0 / 1.0 + exp(-x);
-}
+// double sigmoid(double x)
+// {
+// 	return 1.0 / 1.0 + exp(-x);
+// }
 
 __device__ double sigmoid(double x)
 {
 	return 1.0 / 1.0 + exp(-x);
 }
 
-double sigmoid_prime(double x)
-{
-	double s = sigmoid(x);
-	return s * (1 - s);
-}
+// double sigmoid_prime(double x)
+// {
+// 	double s = sigmoid(x);
+// 	return s * (1 - s);
+// }
 
 __device__ double sigmoid_prime(double x)
 {
@@ -29,20 +29,20 @@ __device__ double sigmoid_prime(double x)
 	return s * (1 - s);
 }
 
-double tanh2(double x)
-{
-	return tanh(x);
-}
+// double tanh2(double x)
+// {
+// 	return tanh(x);
+// }
 
 __device__ double tanh2(double x)
 {
 	return tanh(x);
 }
 
-double tanh_prime(double x)
-{
-	return 1.0 - powf(tanh(x), 2.0);
-}
+// double tanh_prime(double x)
+// {
+// 	return 1.0 - powf(tanh(x), 2.0);
+// }
 
 __device__ double tanh_prime(double x)
 {
@@ -50,10 +50,10 @@ __device__ double tanh_prime(double x)
 }
 
 
-double relu(double x)
-{
-	return std::max(x, 0.0);
-}
+// double relu(double x)
+// {
+// 	return std::max(x, 0.0);
+// }
 
 
 __device__ double relu(double x)
@@ -65,20 +65,20 @@ __device__ double relu(double x)
 	// return std::max(x, 0.0);
 }
 
-double relu_prime(double x)
-{
-	return (double)((int)(x >= 0));
-}
+// double relu_prime(double x)
+// {
+// 	return (double)((int)(x >= 0));
+// }
 
 __device__ double relu_prime(double x)
 {
 	return (double)((int)(x >= 0));
 }
 
-double one_minus(double x)
-{
-	return 1 - x;
-}
+// double one_minus(double x)
+// {
+// 	return 1 - x;
+// }
 
 __device__ double one_minus(double x)
 {
