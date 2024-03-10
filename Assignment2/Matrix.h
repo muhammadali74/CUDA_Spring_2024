@@ -23,7 +23,34 @@ cudaError_t gpuErrchk(cudaError_t result)
 	return result;
 }
 
-// KERNEL FUNCTIONS
+// __global__ void dotKernel(double *d_M, double *d_N, double *d_P, double *d_B, int rows, int cols, int mCols) {
+//     // Calculate the row index of the d_Pelement and d_M
+//     int Row = blockIdx.y * blockDim.y + threadIdx.y;
+//     // Calculate the column index of d_P and d_N
+//     int Col = blockIdx.x * blockDim.x + threadIdx.x;
+//     if ((Row < rows) && (Col < mCols))
+//     {
+//         double Pvalue = 0;
+//         // each thread computes one element of the block sub-matrix
+//         for (int k = 0; k < cols; ++k)
+//         {
+//             Pvalue += d_M[Row * cols + k] * d_N[k * mCols + Col];
+//         }
+//         d_P[Row * mCols + Col] = Pvalue + d_B[Row * mCols + Col];
+//     }
+// }
+
+// __global__ void updateweightsKernel(double *data, double *m, double learning_rate, int rows, int cols)
+// {
+//     int row = blockIdx.y * blockDim.y + threadIdx.y;
+//     int col = blockIdx.x * blockDim.x + threadIdx.x;
+//     if (row < rows && col < cols)
+//     {
+//         data[row * cols + col] = data[row * cols + col] - (learning_rate * m[row * cols + col]);
+//     }
+// }
+
+
 // __global__ void MatrixMulKernelTiled(double* d_M, double* d_N, double* d_P, int Width) 
 // { const int TILE_WIDTH = 16;
 // 	__shared__ float Mds[TILE_WIDTH][TILE_WIDTH]; 
@@ -240,10 +267,12 @@ cudaError_t gpuErrchk(cudaError_t result)
 // public:
 // 	int rows, cols;
 // 	double *data;
+//     double *data_d;
 
 // 	Matrix(int rows, int cols) : rows(rows), cols(cols)
 // 	{
 // 		data = new double[rows * cols];
+//         cudaMalloc(&data_d, rows * cols * sizeof(double));
 // 	}
 
 // 	Matrix()
@@ -251,27 +280,33 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 		rows = 0;
 // 		cols = 0;
 // 		data = nullptr;
+//         data_d = nullptr;
 // 	}
 
 // 	Matrix(int rows, int cols, double *data) : rows(rows), cols(cols), data(data)
 // 	{
 // 		this->data = new double[rows * cols];
 // 		memcpy(this->data, data, rows * cols * sizeof(double));
+
+//         cudaMalloc(&data_d, rows * cols * sizeof(double));
+//         cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
 // 	}
 
 // 	~Matrix()
 // 	{
 // 		delete[] data;
+//         cudaFree(data_d);
+
 // 		data = nullptr;
+//         data_d = nullptr;
 // 	}
 
 // 	Matrix(const Matrix &other) : rows(other.rows), cols(other.cols)
 // 	{
 // 		data = new double[rows * cols]; // Allocate memory for new object
-// 										// for (int i = 0; i < rows * cols; ++i) {
-// 										//     data[i] = other.data[i]; // Copy elements
-// 										// }
 // 		memcpy(data, other.data, rows * cols * sizeof(double));
+//         cudaMalloc(&data_d, rows * cols * sizeof(double));
+//         cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
 // 	}
 
 // 	// Assignment operator
@@ -291,9 +326,19 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 											//     data[i] = other.data[i]; // Copy elements
 // 											// }
 // 			memcpy(data, other.data, rows * cols * sizeof(double));
+//             cudaMalloc(&data_d, rows * cols * sizeof(double));
+//             cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
 // 		}
 // 		return *this; // Return a reference to the modified object
 // 	}
+
+//     void synchronize() {
+//         cudaMemcpy(data, data_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+//     }
+
+//     void deviceSynchronize() {
+//         cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+//     }
 
 // 	double &operator()(int i, int j)
 // 	{
@@ -322,21 +367,19 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 	Matrix operator*(const double &num)
 // 	{
 // 		Matrix result(rows, cols);
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * cols * sizeof(double));
+		
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		multiplyfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
+// 		multiplyfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result.data_d, rows, cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(result_d);
+//         result.synchronize();
+
+// 		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 // 		return result;
 // 	}
@@ -349,25 +392,27 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 			return *this;
 // 		}
 // 		Matrix result(rows, cols);
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *m_d;
-// 		cudaMalloc(&m_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * cols * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *m_d;
+// 		// cudaMalloc(&m_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, rows * cols * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		addKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+// 		addKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, rows, cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(m_d);
-// 		cudaFree(result_d);
+//         result.synchronize();
+
+// 		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(m_d);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 
 // 		return result;
@@ -376,21 +421,23 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 	Matrix operator+(const double &num)
 // 	{
 // 		Matrix result(rows, cols);
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * cols * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, rows * cols * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		addfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
+// 		addfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result.data_d, rows, cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(result_d);
+
+//         result.synchronize();
+// 		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 // 		return result;
 // 	}
@@ -403,25 +450,27 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 			return *this;
 // 		}
 // 		Matrix result(rows, cols);
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *m_d;
-// 		cudaMalloc(&m_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * cols * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *m_d;
+// 		// cudaMalloc(&m_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, rows * cols * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+// 		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, rows, cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(m_d);
-// 		cudaFree(result_d);
+//         result.synchronize();
+
+// 		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(m_d);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 // 		return result;
 // 	}
@@ -429,9 +478,9 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 	Matrix operator-() const
 // 	{
 // 		Matrix result(rows, cols);
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
@@ -439,8 +488,10 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, data_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
+//         result.synchronize();
+
+// 		// cudaMemcpy(result.data, data_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
 // 		// cudaDeviceReset();
 // 		return result;
 // 	}
@@ -452,25 +503,27 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 			std::cout << "Invalid size" << std::endl;
 // 			return *this;
 // 		}
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *m_d;
-// 		cudaMalloc(&m_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * cols * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *m_d;
+// 		// cudaMalloc(&m_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, rows * cols * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+// 		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, data_d, rows, cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(m_d);
-// 		cudaFree(result_d);
+//         this->synchronize();
+
+// 		// cudaMemcpy(data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(m_d);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 // 		return *this;
 // 	}
@@ -484,25 +537,27 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 		}
 // 		Matrix result(rows, m.cols);
 
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *m_d;
-// 		cudaMalloc(&m_d, m.rows * m.cols * sizeof(double));
-// 		cudaMemcpy(m_d, m.data, m.rows * m.cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * m.cols * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *m_d;
+// 		// cudaMalloc(&m_d, m.rows * m.cols * sizeof(double));
+// 		// cudaMemcpy(m_d, m.data, m.rows * m.cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, rows * m.cols * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((m.cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		multiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols, m.cols);
+// 		multiplyKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, rows, cols, m.cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, rows * m.cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(m_d);
-// 		cudaFree(result_d);
+//         result.synchronize();
+
+// 		// cudaMemcpy(result.data, result_d, rows * m.cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(m_d);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 
 // 		return result;
@@ -517,25 +572,26 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 		}
 
 // 		Matrix result(rows, cols);
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *m_d;
-// 		cudaMalloc(&m_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * cols * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *m_d;
+// 		// cudaMalloc(&m_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, rows * cols * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		divideKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+// 		divideKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, rows, cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(m_d);
-// 		cudaFree(result_d);
+//         result.synchronize();
+// 		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(m_d);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 // 		return result;
 // 	}
@@ -543,21 +599,23 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 	Matrix operator/(double num)
 // 	{
 // 		Matrix result(rows, cols);
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * cols * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, rows * cols * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		dividefloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
+// 		dividefloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result.data_d, rows, cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(result_d);
+//         result.synchronize();
+
+// 		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 // 		return result;
 // 	}
@@ -570,25 +628,27 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 			return *this;
 // 		}
 // 		Matrix result(rows, cols);
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *m_d;
-// 		cudaMalloc(&m_d, m.rows * m.cols * sizeof(double));
-// 		cudaMemcpy(m_d, m.data, m.rows * m.cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * cols * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *m_d;
+// 		// cudaMalloc(&m_d, m.rows * m.cols * sizeof(double));
+// 		// cudaMemcpy(m_d, m.data, m.rows * m.cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, rows * cols * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		EmultiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
+// 		EmultiplyKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, rows, cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(m_d);
-// 		cudaFree(result_d);
+//         result.synchronize();
+
+// 		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(m_d);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 // 		return result;
 // 	}
@@ -596,21 +656,23 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 	Matrix transpose()
 // 	{
 // 		Matrix result(cols, rows);
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, cols * rows * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, cols * rows * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((rows + dimBlock.x - 1) / dimBlock.x, (cols + dimBlock.y - 1) / dimBlock.y);
 
-// 		transposeKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols);
+// 		transposeKernel<<<dimGrid, dimBlock>>>(data_d, result.data_d, rows, cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, cols * rows * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(result_d);
+//         result.synchronize();
+
+// 		// cudaMemcpy(result.data, result_d, cols * rows * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 // 		return result;
 // 	}
@@ -623,17 +685,19 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 	static Matrix Random(int inputSize, int outputSize)
 // 	{
 // 		Matrix random(inputSize, outputSize);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, inputSize * outputSize * sizeof(double));
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, inputSize * outputSize * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((outputSize + dimBlock.x - 1) / dimBlock.x, (inputSize + dimBlock.y - 1) / dimBlock.y);
 
-// 		randomKernel<<<dimGrid, dimBlock>>>(result_d, inputSize, outputSize);
+// 		randomKernel<<<dimGrid, dimBlock>>>(random.data_d, inputSize, outputSize);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(random.data, result_d, inputSize * outputSize * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(result_d);
+//         random.synchronize();
+
+// 		// cudaMemcpy(random.data, result_d, inputSize * outputSize * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(result_d);
 // 		// cudaDeviceReset();
 // 		return random;
 // 	}
@@ -684,21 +748,23 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 	{
 // 		Matrix result(rows, cols);
 
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * cols * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, rows * cols * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		unaryExprKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols, type);
+// 		unaryExprKernel<<<dimGrid, dimBlock>>>(data_d, result.data_d, rows, cols, type);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(result_d);
+//         result.synchronize();
+
+// 		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(result_d);
 
 // 		return result;
 // 	}
@@ -719,21 +785,22 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 		// for (int i = 0; i < rows*cols; i++) {
 // 		// 	result.data[i] = std::log(data[i]);
 // 		// }
-// 		double *data_d;
-// 		cudaMalloc(&data_d, rows * cols * sizeof(double));
-// 		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-// 		double *result_d;
-// 		cudaMalloc(&result_d, rows * cols * sizeof(double));
+// 		// double *data_d;
+// 		// cudaMalloc(&data_d, rows * cols * sizeof(double));
+// 		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+// 		// double *result_d;
+// 		// cudaMalloc(&result_d, rows * cols * sizeof(double));
 // 		dim3 dimBlock(16, 16);
 // 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-// 		logKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols);
+// 		logKernel<<<dimGrid, dimBlock>>>(data_d, result.data_d, rows, cols);
 // 		cudaDeviceSynchronize();
 // 		gpuErrchk(cudaGetLastError());
 
-// 		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-// 		cudaFree(data_d);
-// 		cudaFree(result_d);
+//         result.synchronize();
+// 		// cudaMemcpy(result.data, result.data_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+// 		// cudaFree(data_d);
+// 		// cudaFree(result_d);
 // 		return result;
 // 	}
 
@@ -747,6 +814,7 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 				result(i, j) = data[(i + startrow) * cols + j + startcol];
 // 			}
 // 		}
+//         result.deviceSynchronize();
 // 		return result;
 // 	}
 
@@ -760,10 +828,42 @@ cudaError_t gpuErrchk(cudaError_t result)
 // 				result(i - startrow, j - startcol) = data[i * cols + j];
 // 			}
 // 		}
+//         result.deviceSynchronize();
 // 		return result;
 // 	}
+
+//     Matrix dotproduct(const Matrix &m, const Matrix &b) {
+//         Matrix result(rows, m.cols);
+
+//         dim3 dimBlock(16, 16);
+// 		dim3 dimGrid((m.cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+
+//         dotKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, b.data_d , rows, cols, m.cols);
+//         cudaDeviceSynchronize();
+//         gpuErrchk(cudaGetLastError());
+
+//         result.synchronize();
+//         return result;
+//     }
+
+//     Matrix updateweights(const Matrix &m, double learning_rate) {
+//         // Matrix result(rows, cols);
+
+//         dim3 dimBlock(16, 16);
+//         dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+
+//         updateweightsKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, learning_rate, rows, cols);
+
+//         cudaDeviceSynchronize();
+//         gpuErrchk(cudaGetLastError());
+
+//         this->synchronize();
+//         return *this;
+//     }
+
 // };
 
+// KERNEL FUNCTIONS
 __global__ void MatrixMulKernelTiled(double* d_M, double* d_N, double* d_P, int Width) 
 { const int TILE_WIDTH = 16;
 	__shared__ float Mds[TILE_WIDTH][TILE_WIDTH]; 
@@ -980,12 +1080,10 @@ class Matrix
 public:
 	int rows, cols;
 	double *data;
-    double *data_d;
 
 	Matrix(int rows, int cols) : rows(rows), cols(cols)
 	{
 		data = new double[rows * cols];
-        cudaMalloc(&data_d, rows * cols * sizeof(double));
 	}
 
 	Matrix()
@@ -993,33 +1091,33 @@ public:
 		rows = 0;
 		cols = 0;
 		data = nullptr;
-        data_d = nullptr;
 	}
 
 	Matrix(int rows, int cols, double *data) : rows(rows), cols(cols), data(data)
 	{
 		this->data = new double[rows * cols];
 		memcpy(this->data, data, rows * cols * sizeof(double));
-
-        cudaMalloc(&data_d, rows * cols * sizeof(double));
-        cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
 	}
 
 	~Matrix()
 	{
-		delete[] data;
-        cudaFree(data_d);
-
+        try{
+            delete[] data;
+            throw -1;
+        }
+        catch(){
+        }
+		// delete[] data;
 		data = nullptr;
-        data_d = nullptr;
 	}
 
 	Matrix(const Matrix &other) : rows(other.rows), cols(other.cols)
 	{
 		data = new double[rows * cols]; // Allocate memory for new object
+										// for (int i = 0; i < rows * cols; ++i) {
+										//     data[i] = other.data[i]; // Copy elements
+										// }
 		memcpy(data, other.data, rows * cols * sizeof(double));
-        cudaMalloc(&data_d, rows * cols * sizeof(double));
-        cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
 	}
 
 	// Assignment operator
@@ -1039,19 +1137,9 @@ public:
 											//     data[i] = other.data[i]; // Copy elements
 											// }
 			memcpy(data, other.data, rows * cols * sizeof(double));
-            cudaMalloc(&data_d, rows * cols * sizeof(double));
-            cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
 		}
 		return *this; // Return a reference to the modified object
 	}
-
-    void synchronize() {
-        cudaMemcpy(data, data_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-    }
-
-    void deviceSynchronize() {
-        cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-    }
 
 	double &operator()(int i, int j)
 	{
@@ -1080,19 +1168,21 @@ public:
 	Matrix operator*(const double &num)
 	{
 		Matrix result(rows, cols);
-		
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		multiplyfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result.data_d, rows, cols);
+		multiplyfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-
-		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 		return result;
 	}
@@ -1105,27 +1195,25 @@ public:
 			return *this;
 		}
 		Matrix result(rows, cols);
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *m_d;
-		// cudaMalloc(&m_d, rows * cols * sizeof(double));
-		// cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * cols * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, rows * cols * sizeof(double));
+		cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		addKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, rows, cols);
+		addKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-
-		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(m_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(m_d);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 
 		return result;
@@ -1134,23 +1222,21 @@ public:
 	Matrix operator+(const double &num)
 	{
 		Matrix result(rows, cols);
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * cols * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		addfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result.data_d, rows, cols);
+		addfloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-
-        result.synchronize();
-		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 		return result;
 	}
@@ -1163,27 +1249,25 @@ public:
 			return *this;
 		}
 		Matrix result(rows, cols);
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *m_d;
-		// cudaMalloc(&m_d, rows * cols * sizeof(double));
-		// cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * cols * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, rows * cols * sizeof(double));
+		cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, rows, cols);
+		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-
-		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(m_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(m_d);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 		return result;
 	}
@@ -1191,9 +1275,9 @@ public:
 	Matrix operator-() const
 	{
 		Matrix result(rows, cols);
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
@@ -1201,10 +1285,8 @@ public:
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-
-		// cudaMemcpy(result.data, data_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
+		cudaMemcpy(result.data, data_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
 		// cudaDeviceReset();
 		return result;
 	}
@@ -1216,27 +1298,25 @@ public:
 			std::cout << "Invalid size" << std::endl;
 			return *this;
 		}
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *m_d;
-		// cudaMalloc(&m_d, rows * cols * sizeof(double));
-		// cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * cols * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, rows * cols * sizeof(double));
+		cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, data_d, rows, cols);
+		subtractKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        this->synchronize();
-
-		// cudaMemcpy(data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(m_d);
-		// cudaFree(result_d);
+		cudaMemcpy(data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(m_d);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 		return *this;
 	}
@@ -1250,27 +1330,25 @@ public:
 		}
 		Matrix result(rows, m.cols);
 
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *m_d;
-		// cudaMalloc(&m_d, m.rows * m.cols * sizeof(double));
-		// cudaMemcpy(m_d, m.data, m.rows * m.cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * m.cols * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, m.rows * m.cols * sizeof(double));
+		cudaMemcpy(m_d, m.data, m.rows * m.cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * m.cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((m.cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		multiplyKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, rows, cols, m.cols);
+		multiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols, m.cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-
-		// cudaMemcpy(result.data, result_d, rows * m.cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(m_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, rows * m.cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(m_d);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 
 		return result;
@@ -1285,26 +1363,25 @@ public:
 		}
 
 		Matrix result(rows, cols);
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *m_d;
-		// cudaMalloc(&m_d, rows * cols * sizeof(double));
-		// cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * cols * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, rows * cols * sizeof(double));
+		cudaMemcpy(m_d, m.data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		divideKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, rows, cols);
+		divideKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(m_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(m_d);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 		return result;
 	}
@@ -1312,23 +1389,21 @@ public:
 	Matrix operator/(double num)
 	{
 		Matrix result(rows, cols);
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * cols * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		dividefloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result.data_d, rows, cols);
+		dividefloatKernel<<<dimGrid, dimBlock>>>(data_d, num, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-
-		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 		return result;
 	}
@@ -1341,27 +1416,25 @@ public:
 			return *this;
 		}
 		Matrix result(rows, cols);
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *m_d;
-		// cudaMalloc(&m_d, m.rows * m.cols * sizeof(double));
-		// cudaMemcpy(m_d, m.data, m.rows * m.cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * cols * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *m_d;
+		cudaMalloc(&m_d, m.rows * m.cols * sizeof(double));
+		cudaMemcpy(m_d, m.data, m.rows * m.cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		EmultiplyKernel<<<dimGrid, dimBlock>>>(data_d, m.data_d, result.data_d, rows, cols);
+		EmultiplyKernel<<<dimGrid, dimBlock>>>(data_d, m_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-
-		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(m_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(m_d);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 		return result;
 	}
@@ -1369,23 +1442,21 @@ public:
 	Matrix transpose()
 	{
 		Matrix result(cols, rows);
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, cols * rows * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, cols * rows * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((rows + dimBlock.x - 1) / dimBlock.x, (cols + dimBlock.y - 1) / dimBlock.y);
 
-		transposeKernel<<<dimGrid, dimBlock>>>(data_d, result.data_d, rows, cols);
+		transposeKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-
-		// cudaMemcpy(result.data, result_d, cols * rows * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, cols * rows * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 		return result;
 	}
@@ -1398,19 +1469,17 @@ public:
 	static Matrix Random(int inputSize, int outputSize)
 	{
 		Matrix random(inputSize, outputSize);
-		// double *result_d;
-		// cudaMalloc(&result_d, inputSize * outputSize * sizeof(double));
+		double *result_d;
+		cudaMalloc(&result_d, inputSize * outputSize * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((outputSize + dimBlock.x - 1) / dimBlock.x, (inputSize + dimBlock.y - 1) / dimBlock.y);
 
-		randomKernel<<<dimGrid, dimBlock>>>(random.data_d, inputSize, outputSize);
+		randomKernel<<<dimGrid, dimBlock>>>(result_d, inputSize, outputSize);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        random.synchronize();
-
-		// cudaMemcpy(random.data, result_d, inputSize * outputSize * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(result_d);
+		cudaMemcpy(random.data, result_d, inputSize * outputSize * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(result_d);
 		// cudaDeviceReset();
 		return random;
 	}
@@ -1461,23 +1530,21 @@ public:
 	{
 		Matrix result(rows, cols);
 
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * cols * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		unaryExprKernel<<<dimGrid, dimBlock>>>(data_d, result.data_d, rows, cols, type);
+		unaryExprKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols, type);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-
-		// cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(result_d);
 
 		return result;
 	}
@@ -1498,22 +1565,21 @@ public:
 		// for (int i = 0; i < rows*cols; i++) {
 		// 	result.data[i] = std::log(data[i]);
 		// }
-		// double *data_d;
-		// cudaMalloc(&data_d, rows * cols * sizeof(double));
-		// cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
-		// double *result_d;
-		// cudaMalloc(&result_d, rows * cols * sizeof(double));
+		double *data_d;
+		cudaMalloc(&data_d, rows * cols * sizeof(double));
+		cudaMemcpy(data_d, data, rows * cols * sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows * cols * sizeof(double));
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		logKernel<<<dimGrid, dimBlock>>>(data_d, result.data_d, rows, cols);
+		logKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols);
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
 
-        result.synchronize();
-		// cudaMemcpy(result.data, result.data_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
-		// cudaFree(data_d);
-		// cudaFree(result_d);
+		cudaMemcpy(result.data, result_d, rows * cols * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(result_d);
 		return result;
 	}
 
@@ -1527,7 +1593,6 @@ public:
 				result(i, j) = data[(i + startrow) * cols + j + startcol];
 			}
 		}
-        result.deviceSynchronize();
 		return result;
 	}
 
@@ -1541,9 +1606,15 @@ public:
 				result(i - startrow, j - startcol) = data[i * cols + j];
 			}
 		}
-        result.deviceSynchronize();
 		return result;
 	}
+
+    void deviceSynchronize() {
+    }
+    void synchronize(){}
 };
+
+
+
 
 #endif

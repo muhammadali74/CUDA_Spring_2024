@@ -2,12 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def plot_loss_vs_epoch(filename, epochs):
-  """
-  Reads epoch and train loss values from a text file and plots them using Matplotlib.
 
-  Args:
-      filename (str): Path to the text file containing data (epoch loss pairs).
-  """
 
   # Read data from the text file
   data = np.loadtxt(filename)
@@ -33,6 +28,6 @@ def plot_loss_vs_epoch(filename, epochs):
   # Show the plot
   plt.show()
 
-# Example usage
-filename = "./epochs.txt"  # Replace with your actual filename
+
+filename = "./epochs.txt"
 plot_loss_vs_epoch(filename, 35)

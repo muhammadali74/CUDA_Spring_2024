@@ -24,7 +24,6 @@ void saveVectorsToTxt(const std::string &filename, const std::vector<int> &epoch
 	{
 		outfile << epochs[i] << " " << std::endl;
 	}
-	
 
 	for (int i = 0; i < losses.size(); ++i)
 	{
@@ -90,16 +89,11 @@ public:
 		this->input = input;
 		// Matrix iden = Matrix::Zero(weights.Rows(), weights.Cols());
 		// cout << iden;
-		this->output = input * weights + bias;
+		this->output = input * weights + bias; // also works
+		// this->output = input.dotproduct(weights, bias);
 		// cout << output;
 		return this->output;
 	}
-
-	// Matrix forwardPropogation2(Matrix &input){
-	// 	this->input = input;
-	// 	return this->output;
-	
-	// }
 
 	// computes dE/dW, dE/dB for a given outputError = dE/dY. Returns input_error = dE/dX.
 	Matrix backwardPropagation(Matrix &outputError, double learningRate)
@@ -108,8 +102,11 @@ public:
 		Matrix weightsError = input.transpose() * outputError; // calculates dE/dW
 
 		// update parameters
+
 		weights -= weightsError * learningRate;
 		bias -= outputError * learningRate;
+		// weights.updateweights(weightsError, learningRate);
+		// bias.updateweights(outputError, learningRate);
 
 		return inputError;
 	}
@@ -224,7 +221,7 @@ public:
 		std::vector<int> epochvec(epochs);
 		std::vector<double> trainLoss(epochs);
 
-		std::vector<double>valloss(epochs);
+		std::vector<double> valloss(epochs);
 
 		std::iota(epochvec.begin(), epochvec.end(), 0);
 
@@ -244,7 +241,6 @@ public:
 				int index = order[j];
 				Matrix output = x_train.row(index);
 
-
 				for (Layer *layer : layers)
 					output = layer->forwardPropagation(output);
 
@@ -263,7 +259,10 @@ public:
 			trainLoss.push_back(err);
 			std::cout << "Epoch " << (i + 1) << "/" << epochs << " error = " << err << std::endl;
 
-			for (int j=0; j < x_val.Rows(); j++){
+
+			// calculate validation error
+			for (int j = 0; j < x_val.Rows(); j++)
+			{
 				Matrix otp = x_val.row(j);
 				for (Layer *layer : layers)
 					otp = layer->forwardPropagation(otp);
