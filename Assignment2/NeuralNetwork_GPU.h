@@ -137,25 +137,25 @@ __global__ void unaryExprKernel(double *data, double *result, int rows, int cols
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
 		if (type == 0) {
-		result[row*cols + col] = tanh2(data[row*cols + col]); 
+		result[row*cols + col] = Activation::tanh2(data[row*cols + col]); 
 		}
 		else if (type == 1) {
-		result[row*cols + col] = tanh_prime(data[row*cols + col]);
+		result[row*cols + col] = Activation::tanh_prime(data[row*cols + col]);
 		}
 		else if (type == 2) {
-		result[row*cols + col] = sigmoid(data[row*cols + col]);
+		result[row*cols + col] = Activation::sigmoid(data[row*cols + col]);
 		}
 		else if (type == 3) {
-			result[row*cols + col] = sigmoid_prime(data[row*cols + col]);
+			result[row*cols + col] = Activation::sigmoid_prime(data[row*cols + col]);
 		}
 		else if (type == 4) {
-			result[row*cols + col] = relu(data[row*cols + col]);
+			result[row*cols + col] = Activation::relu(data[row*cols + col]);
 		}
 		else if (type == 5) {
-			result[row*cols + col] = relu_prime(data[row*cols + col]);
+			result[row*cols + col] = Activation::relu_prime(data[row*cols + col]);
 		}
 		else if (type == 6) {
-			result[row*cols + col] = one_minus(data[row*cols + col]);
+			result[row*cols + col] = Activation::one_minus(data[row*cols + col]);
 		}
 	}
 }

@@ -5,12 +5,15 @@
 #include <nvfunctional>
 // #include <Eigen/Dense>
 
-using namespace std;
+// using namespace std;
 
 // double sigmoid(double x)
 // {
 // 	return 1.0 / 1.0 + exp(-x);
 // }
+
+namespace Activation
+{
 
 __device__ double sigmoid(double x)
 {
@@ -83,6 +86,8 @@ __device__ double relu_prime(double x)
 __device__ double one_minus(double x)
 {
 	return 1 - x;
+}
+
 }
 
 double mse(Matrix& y_true, Matrix& y_pred)
