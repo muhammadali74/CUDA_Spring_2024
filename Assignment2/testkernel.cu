@@ -14,8 +14,7 @@ int main(){
     m2.data = m2data;
 
     Matrix m3 = m1 * m2;
-    Matrix m4 = m1.dot(m2);
+
     std::cout << m3;
-    std::cout << endl;
-    std::cout << m4;
+
 }

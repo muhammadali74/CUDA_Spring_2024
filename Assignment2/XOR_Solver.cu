@@ -19,9 +19,9 @@ int main()
 
 	Network nn;
 	nn.add(new DenseLayer(2, 3));
-	nn.add(new ActivationLayer(tanh2, tanh_prime));
+	nn.add(new ActivationLayer(0, 1));
 	nn.add(new DenseLayer(3, 1));
-	nn.add(new ActivationLayer(tanh2, tanh_prime));
+	nn.add(new ActivationLayer(0, 1));
 
 	nn.use(mse, mse_prime);
 	

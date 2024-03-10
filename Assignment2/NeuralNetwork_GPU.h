@@ -132,11 +132,31 @@ __global__ void logKernel(double *data_d, double *result, int rows, int cols) {
 	}
 }
 
-__global__ void unaryExprKernel(double *data, double *result, int rows, int cols, const nvstd::function<double(double)> &activation) {
+__global__ void unaryExprKernel(double *data, double *result, int rows, int cols, const int type) {
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	if (row < rows && col < cols) {
-		result[row*cols + col] = invoker(activation, data[row*cols + col]);
+		if (type == 0) {
+		result[row*cols + col] = tanh2(data[row*cols + col]); 
+		}
+		else if (type == 1) {
+		result[row*cols + col] = tanh_prime(data[row*cols + col]);
+		}
+		else if (type == 2) {
+		result[row*cols + col] = sigmoid(data[row*cols + col]);
+		}
+		else if (type == 3) {
+			result[row*cols + col] = sigmoid_prime(data[row*cols + col]);
+		}
+		else if (type == 4) {
+			result[row*cols + col] = relu(data[row*cols + col]);
+		}
+		else if (type == 5) {
+			result[row*cols + col] = relu_prime(data[row*cols + col]);
+		}
+		else if (type == 6) {
+			result[row*cols + col] = one_minus(data[row*cols + col]);
+		}
 	}
 }
 
@@ -596,7 +616,7 @@ class Matrix{
 
 	}
 
-	Matrix unaryExpr(const nvstd::function<double(double)> &activation) {
+	Matrix unaryExpr(const int type) {
 		Matrix result(rows, cols);
 
 		double *data_d;
@@ -607,7 +627,7 @@ class Matrix{
 		dim3 dimBlock(16, 16);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
 
-		unaryExprKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols, activation);
+		unaryExprKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols, type);
 
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaGetLastError());
@@ -764,11 +784,16 @@ private:
 class ActivationLayer : public Layer
 {
 public:
-	ActivationLayer(nvstd::function<double(double)> activation,
-		nvstd::function<double(double)> activationPrime)
-	{
+	// ActivationLayer(nvstd::function<double(double)> activation,
+	// 	nvstd::function<double(double)> activationPrime)
+	// {
+	// 	this->activation = activation;
+	// 	this->activationPrime = activationPrime;
+	// }
+	ActivationLayer(int activation, int activationPrime) {
 		this->activation = activation;
 		this->activationPrime = activationPrime;
+
 	}
 
 	//returns the activated input
@@ -787,8 +812,10 @@ public:
 	}
 
 private:
-	nvstd::function<double(double)> activation;
-	nvstd::function<double(double)> activationPrime;
+	// nvstd::function<double(double)> activation;
+	// nvstd::function<double(double)> activationPrime;
+	int activation;
+	int activationPrime;
 };
 
 class FlattenLayer :public Layer
