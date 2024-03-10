@@ -3,7 +3,7 @@
 #pragma once
 #include <cmath>
 
-using namespace std;
+namespace Activation{
 
 __device__ double sigmoid(double x)
 {
@@ -51,6 +51,7 @@ __device__ double relu_prime(double x)
 __device__ double one_minus(double x)
 {
 	return 1 - x;
+}
 }
 
 #endif

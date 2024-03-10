@@ -51,7 +51,7 @@ Eigen::MatrixXf mse_prime(Eigen::MatrixXf& y_true, Eigen::MatrixXf& y_pred)
 	return  2 * (y_pred - y_true) / (y_true.rows()*y_true.cols());
 }
 
-/*
+
 double binary_cross_entropy(Eigen::MatrixXf& y_true, Eigen::MatrixXf& y_pred)
 {
 	return  (-y_true * y_pred.log()).mean() - (y_true.unaryExpr(one_minus)) * (y_pred.unaryExpr(one_minus)).log());
@@ -61,5 +61,5 @@ Eigen::MatrixXf binary_cross_entropy_prime(Eigen::MatrixXf& y_true, Eigen::Matri
 {
 	return ((1 - y_true) / (1 - y_pred) - y_true / y_pred) / y_true.size();
 }
-*/
+
 #endif
