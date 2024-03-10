@@ -155,7 +155,7 @@ int main()
     // cout << y_train;
 
     // nn.fit(x_train.block<1000,784>(0,0), y_train.block<1000,10>(0,0), epoch, 0.1f);
-    nn.fit(x_train.block(1000, 784, 0, 0), y_train.block(1000, 10, 0, 0), epoch, 0.1);
+    nn.fit(x_train.block(1000, 784, 0, 0), y_train.block(1000, 10, 0, 0), x_valid.block(100, 784, 0, 0), y_valid.block(100, 10, 0, 0), epoch, 0.1);
 
     // test
     //  std::vector<Matrix> output = nn.predict(x_valid(Eigen::seq(0, 2), Eigen::indexing::all));

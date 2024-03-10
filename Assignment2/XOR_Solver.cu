@@ -26,7 +26,7 @@ int main()
 	nn.use(mse, mse_prime);
 	
 	//train
-	nn.fit(x_train, y_train, 1000, 0.1f);
+	nn.fit(x_train, y_train, x_train, y_train, 1000, 0.1f);
 
 	//test
 	// std::vector<Eigen::MatrixXf> output = nn.predict(x_train);
