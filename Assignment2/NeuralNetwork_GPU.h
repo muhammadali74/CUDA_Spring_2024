@@ -121,6 +121,14 @@ __global__ void randomKernel(double *result, int rows, int cols) {
 	}
 }
 
+__global__ void logKernel(double *data_d, double *result, int rows, int cols) {
+	int row = blockIdx.y * blockDim.y + threadIdx.y;
+	int col = blockIdx.x * blockDim.x + threadIdx.x;
+	if (row < rows && col < cols) {
+		result[row*cols + col] = log(data_d[row*cols + col]);
+	}
+}
+
 
 
 class Matrix{
@@ -536,10 +544,10 @@ class Matrix{
 
 	static Matrix Zero(int rowsize, int colsize){
 		Matrix zero(rowsize, colsize);
-		// memset(zero.data, 0, rowsize*colsize*sizeof(double));
-		for (int i = 0; i < rowsize*colsize; i++) {
-			zero.data[i] = 0;
-		}
+		memset(zero.data, 0, rowsize*colsize*sizeof(double));
+		// for (int i = 0; i < rowsize*colsize; i++) {
+		// 	zero.data[i] = 0;
+		// }
 		return zero;
 
 	}
@@ -595,9 +603,24 @@ class Matrix{
 
 	Matrix log() {
 		Matrix result(rows, cols);
-		for (int i = 0; i < rows*cols; i++) {
-			result.data[i] = std::log(data[i]);
-		}
+		// for (int i = 0; i < rows*cols; i++) {
+		// 	result.data[i] = std::log(data[i]);
+		// }
+		double *data_d;
+		cudaMalloc(&data_d, rows*cols*sizeof(double));
+		cudaMemcpy(data_d, data, rows*cols*sizeof(double), cudaMemcpyHostToDevice);
+		double *result_d;
+		cudaMalloc(&result_d, rows*cols*sizeof(double));
+		dim3 dimBlock(16, 16);
+		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
+
+		logKernel<<<dimGrid, dimBlock>>>(data_d, result_d, rows, cols);
+		cudaDeviceSynchronize();
+		gpuErrchk(cudaGetLastError());
+
+		cudaMemcpy(result.data, result_d, rows*cols*sizeof(double), cudaMemcpyDeviceToHost);
+		cudaFree(data_d);
+		cudaFree(result_d);
 		return result;
 	}
 
