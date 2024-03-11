@@ -1101,12 +1101,8 @@ public:
 
 	~Matrix()
 	{
-        try{
-            delete[] data;
-            throw -1;
-        }
-        catch(){
-        }
+
+        delete[] data;
 		// delete[] data;
 		data = nullptr;
 	}
