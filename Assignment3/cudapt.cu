@@ -197,8 +197,8 @@ int main(int argc, char *argv[])
     int w = 1024, h = 768, samps = argc == 2 ? atoi(argv[1]) / 4 : 1;              // # samples
     float3 *c = new float3[w * h];                                              // To store the image
     float3 *d_c;
-    cudaMalloc(&d_c, w * h * sizeof(float3));
-    cudaMemcpyToSymbol(spheres, spheres_h, sizeof(spheres_h));
+    checkCudaErr(cudaMalloc(&d_c, w * h * sizeof(float3)), "malloc");
+    // checkCudaErr(cudaMemcpyToSymbol(spheres, spheres_h, sizeof(spheres_h)), "memcpy");
     dim3 threadsPerBlock(16, 16,1);
     dim3 numBlocks(w / threadsPerBlock.x, h / threadsPerBlock.y,1);
     raytracer<<<numBlocks, threadsPerBlock>>>(d_c, w, h, samps);
