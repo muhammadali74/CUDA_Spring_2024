@@ -33,7 +33,7 @@ inline cudaError_t checkCudaErr(cudaError_t err, const char* msg) {
 __device__ float3 mult(const float3 &a, const float3 &b) { return make_float3(a.x * b.x, a.y * b.y, a.z * b.z); }
 // float3 &norm(float3 a) { return *a = *a * (1 / sqrt(a.x * a.x + y * y + z * z)); }
 // double dot(const Vec &b) { return x * b.x + y * b.y + z * b.z; } // cross:
-__device__ float3 modd(float3 const &a, float3 const &b) { return make_float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
+__device__ float3 modd(const float3 &a, const float3 &b) { return make_float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
 
 struct Ray
 {
@@ -52,7 +52,7 @@ struct Sphere
     double rad;     // radius
     float3 p, e, c; // position, emission, color
     Refl_t refl;    // reflection type (DIFFuse, SPECular, REFRactive)
-    Sphere(double rad_, float3 p_, float3 e_, float3 c_, Refl_t refl_) : rad(rad_), p(p_), e(e_), c(c_), refl(refl_) {}
+    __device__ Sphere(double rad_, float3 p_, float3 e_, float3 c_, Refl_t refl_) : rad(rad_), p(p_), e(e_), c(c_), refl(refl_) {}
     __device__ double intersect(const Ray &r) const
     {                        // returns distance, 0 if nohit
         float3 op = p - r.o; // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
@@ -65,35 +65,38 @@ struct Sphere
     }
 };
 
-// __constant__ Sphere spheres[] = {
-//     // Scene: radius, position, emission, color, material
-//     Sphere(1e5, make_float3(1e5 + 1, 40.8, 81.6), float3(), make_float3(.75, .25, .25), DIFF),   // Left
-//     Sphere(1e5, make_float3(-1e5 + 99, 40.8, 81.6), float3(), make_float3(.25, .25, .75), DIFF), // Rght
-//     Sphere(1e5, make_float3(50, 40.8, 1e5), float3(), make_float3(.75, .75, .75), DIFF),         // Back
-//     Sphere(1e5, make_float3(50, 40.8, -1e5 + 170), float3(), float3(), DIFF),                    // Frnt
-//     Sphere(1e5, make_float3(50, 1e5, 81.6), float3(), make_float3(.75, .75, .75), DIFF),         // Botm
-//     Sphere(1e5, make_float3(50, -1e5 + 81.6, 81.6), float3(), make_float3(.75, .75, .75), DIFF), // Top
-//     Sphere(16.5, make_float3(27, 16.5, 47), float3(), make_float3(1, 1, 1) * .999, SPEC),        // Mirr
-//     Sphere(16.5, make_float3(73, 16.5, 78), float3(), make_float3(1, 1, 1) * .999, REFR),        // Glas
-//     Sphere(600, make_float3(50, 681.6 - .27, 81.6), make_float3(12, 12, 12), float3(), DIFF)     // Lite
-// };
-Sphere spheres_h[] = {
- { 1e5f, { 1e5f + 1.0f, 40.8f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { 0.75f, 0.25f, 0.25f }, DIFF }, //Left 
- { 1e5f, { -1e5f + 99.0f, 40.8f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { .25f, .25f, .75f }, DIFF }, //Rght 
- { 1e5f, { 50.0f, 40.8f, 1e5f }, { 0.0f, 0.0f, 0.0f }, { .75f, .75f, .75f }, DIFF }, //Back 
- { 1e5f, { 50.0f, 40.8f, -1e5f + 600.0f }, { 0.0f, 0.0f, 0.0f }, { 1.00f, 1.00f, 1.00f }, DIFF }, //Frnt 
- { 1e5f, { 50.0f, 1e5f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { .75f, .75f, .75f }, DIFF }, //Botm 
- { 1e5f, { 50.0f, -1e5f + 81.6f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { .75f, .75f, .75f }, DIFF }, //Top 
- { 16.5f, { 27.0f, 16.5f, 47.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, DIFF }, // small sphere 1
- { 16.5f, { 73.0f, 16.5f, 78.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, DIFF }, // small sphere 2
- { 600.0f, { 50.0f, 681.6f - .77f, 81.6f }, { 2.0f, 1.8f, 1.6f }, { 0.0f, 0.0f, 0.0f }, DIFF }  // Light
+
+__constant__ Sphere spheres[9] = {
+    // Scene: radius, position, emission, color, material
+    Sphere(1e5, make_float3(1e5 + 1, 40.8, 81.6), float3(), make_float3(.75, .25, .25), DIFF),   // Left
+    Sphere(1e5, make_float3(-1e5 + 99, 40.8, 81.6), float3(), make_float3(.25, .25, .75), DIFF), // Rght
+    Sphere(1e5, make_float3(50, 40.8, 1e5), float3(), make_float3(.75, .75, .75), DIFF),         // Back
+    Sphere(1e5, make_float3(50, 40.8, -1e5 + 170), float3(), float3(), DIFF),                    // Frnt
+    Sphere(1e5, make_float3(50, 1e5, 81.6), float3(), make_float3(.75, .75, .75), DIFF),         // Botm
+    Sphere(1e5, make_float3(50, -1e5 + 81.6, 81.6), float3(), make_float3(.75, .75, .75), DIFF), // Top
+    Sphere(16.5, make_float3(27, 16.5, 47), float3(), make_float3(1, 1, 1) * .999, SPEC),        // Mirr
+    Sphere(16.5, make_float3(73, 16.5, 78), float3(), make_float3(1, 1, 1) * .999, REFR),        // Glas
+    Sphere(600, make_float3(50, 681.6 - .27, 81.6), make_float3(12, 12, 12), float3(), DIFF)     // Lite
+
 };
+// Sphere spheres_h[] = {
+//  { 1e5f, { 1e5f + 1.0f, 40.8f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { 0.75f, 0.25f, 0.25f }, DIFF }, //Left 
+//  { 1e5f, { -1e5f + 99.0f, 40.8f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { .25f, .25f, .75f }, DIFF }, //Rght 
+//  { 1e5f, { 50.0f, 40.8f, 1e5f }, { 0.0f, 0.0f, 0.0f }, { .75f, .75f, .75f }, DIFF }, //Back 
+//  { 1e5f, { 50.0f, 40.8f, -1e5f + 600.0f }, { 0.0f, 0.0f, 0.0f }, { 1.00f, 1.00f, 1.00f }, DIFF }, //Frnt 
+//  { 1e5f, { 50.0f, 1e5f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { .75f, .75f, .75f }, DIFF }, //Botm 
+//  { 1e5f, { 50.0f, -1e5f + 81.6f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { .75f, .75f, .75f }, DIFF }, //Top 
+//  { 16.5f, { 27.0f, 16.5f, 47.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, DIFF }, // small sphere 1
+//  { 16.5f, { 73.0f, 16.5f, 78.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, DIFF }, // small sphere 2
+//  { 600.0f, { 50.0f, 681.6f - .77f, 81.6f }, { 2.0f, 1.8f, 1.6f }, { 0.0f, 0.0f, 0.0f }, DIFF }  // Light
+// };
 
-__constant__ Sphere *spheres;
+// __constant__ Sphere *spheres;
 
-inline __host__ __device__ double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+inline __host__ __device__ double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1
+                                                                             : x; }
 
-inline __host__ __device__ int toInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
+inline __host__ __device__ inline int toInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
 
 inline __device__ bool intersect(const Ray &r, double &t, int &id) // all args device frinedly
 {
