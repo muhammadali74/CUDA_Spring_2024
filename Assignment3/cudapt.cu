@@ -96,7 +96,7 @@ __constant__ Sphere spheres[9] = {
 inline __host__ __device__ double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1
                                                                              : x; }
 
-inline __host__ __device__ inline int toInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
+inline __host__ __device__ int toInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
 
 inline __device__ bool intersect(const Ray &r, double &t, int &id) // all args device frinedly
 {
@@ -169,6 +169,7 @@ __global__ void raytracer(float3 *image, int w, int h, int samps ){
     float3 cy = normalize(modd(cx, cam.d)) * .5135;
 
     if (x < w && y < h) {
+    printf("\rRendering (%d spp) %5.2f%%",samps*4,100.*y/(h-1));
     for (int sy=0; sy <2; sy++){
         i = (h-y-1)*w +x;
         for (int sx = 0; sx < 2; sx++) {
