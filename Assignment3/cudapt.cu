@@ -33,7 +33,7 @@ inline cudaError_t checkCudaErr(cudaError_t err, const char* msg) {
 __device__ float3 mult(const float3 &a, const float3 &b) { return make_float3(a.x * b.x, a.y * b.y, a.z * b.z); }
 // float3 &norm(float3 a) { return *a = *a * (1 / sqrt(a.x * a.x + y * y + z * z)); }
 // double dot(const Vec &b) { return x * b.x + y * b.y + z * b.z; } // cross:
-__device__ float3 modd(float3 &a, float3 &b) { return make_float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
+__device__ float3 modd(float3 const &a, float3 const &b) { return make_float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
 
 struct Ray
 {
@@ -91,10 +91,9 @@ Sphere spheres_h[] = {
 
 __constant__ Sphere *spheres;
 
-inline __host__ __device__ double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1
-                                                                             : x; }
+inline __host__ __device__ double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 
-inline __host__ __device__ inline int toInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
+inline __host__ __device__ int toInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
 
 inline __device__ bool intersect(const Ray &r, double &t, int &id) // all args device frinedly
 {
