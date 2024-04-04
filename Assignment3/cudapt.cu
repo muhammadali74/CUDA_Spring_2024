@@ -14,11 +14,13 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-inline cudaError_t checkCudaErr(cudaError_t err, const char* msg) {
-  if (err != cudaSuccess) {
-    fprintf(stderr, "CUDA Runtime error at %s: %s\n", msg, cudaGetErrorString(err));
-  }
-  return err;
+inline cudaError_t checkCudaErr(cudaError_t err, const char *msg)
+{
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "CUDA Runtime error at %s: %s\n", msg, cudaGetErrorString(err));
+    }
+    return err;
 }
 
 // std::default_random_engine generator;
@@ -65,7 +67,6 @@ struct Sphere
     }
 };
 
-
 // __constant__ Sphere spheres[] = {
 //     // Scene: radius, position, emission, color, material
 //     Sphere(1e5, make_float3(1e5 + 1, 40.8, 81.6), float3(), make_float3(.75, .25, .25), DIFF),   // Left
@@ -80,15 +81,15 @@ struct Sphere
 
 // };
 __constant__ Sphere spheres[] = {
- { 1e5f, { 1e5f + 1.0f, 40.8f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { 0.75f, 0.25f, 0.25f }, DIFF }, //Left 
- { 1e5f, { -1e5f + 99.0f, 40.8f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { .25f, .25f, .75f }, DIFF }, //Rght 
- { 1e5f, { 50.0f, 40.8f, 1e5f }, { 0.0f, 0.0f, 0.0f }, { .75f, .75f, .75f }, DIFF }, //Back 
- { 1e5f, { 50.0f, 40.8f, -1e5f + 600.0f }, { 0.0f, 0.0f, 0.0f }, { 1.00f, 1.00f, 1.00f }, DIFF }, //Frnt 
- { 1e5f, { 50.0f, 1e5f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { .75f, .75f, .75f }, DIFF }, //Botm 
- { 1e5f, { 50.0f, -1e5f + 81.6f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { .75f, .75f, .75f }, DIFF }, //Top 
- { 16.5f, { 27.0f, 16.5f, 47.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, DIFF }, // small sphere 1
- { 16.5f, { 73.0f, 16.5f, 78.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, DIFF }, // small sphere 2
- { 600.0f, { 50.0f, 681.6f - .77f, 81.6f }, { 2.0f, 1.8f, 1.6f }, { 0.0f, 0.0f, 0.0f }, DIFF }  // Light
+    {1e5f, {1e5f + 1.0f, 40.8f, 81.6f}, {0.0f, 0.0f, 0.0f}, {0.75f, 0.25f, 0.25f}, DIFF},    // Left
+    {1e5f, {-1e5f + 99.0f, 40.8f, 81.6f}, {0.0f, 0.0f, 0.0f}, {.25f, .25f, .75f}, DIFF},     // Rght
+    {1e5f, {50.0f, 40.8f, 1e5f}, {0.0f, 0.0f, 0.0f}, {.75f, .75f, .75f}, DIFF},              // Back
+    {1e5f, {50.0f, 40.8f, -1e5f + 600.0f}, {0.0f, 0.0f, 0.0f}, {1.00f, 1.00f, 1.00f}, DIFF}, // Frnt
+    {1e5f, {50.0f, 1e5f, 81.6f}, {0.0f, 0.0f, 0.0f}, {.75f, .75f, .75f}, DIFF},              // Botm
+    {1e5f, {50.0f, -1e5f + 81.6f, 81.6f}, {0.0f, 0.0f, 0.0f}, {.75f, .75f, .75f}, DIFF},     // Top
+    {16.5f, {27.0f, 16.5f, 47.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, SPEC},            // small sphere 1
+    {16.5f, {73.0f, 16.5f, 78.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, REFR},            // small sphere 2
+    {600.0f, {50.0f, 681.6f - .77f, 81.6f}, {2.0f, 1.8f, 1.6f}, {0.0f, 0.0f, 0.0f}, DIFF}    // Light
 };
 
 // __constant__ Sphere *spheres;
@@ -152,68 +153,123 @@ inline __device__ bool intersect(const Ray &r, double &t, int &id) // all args d
 // __global__ aulad_kernel() {
 
 // }
-__device__ float3 radiance(Ray &r, curandState state){ // returns ray color
+__device__ float3 radiance(Ray &r, curandState state)
+{ // returns ray color
 
- float3 pixelcolor = make_float3(0.0f, 0.0f, 0.0f);
- float3 mask = make_float3(1.0f, 1.0f, 1.0f); 
+    float3 pixelcolor = make_float3(0.0f, 0.0f, 0.0f);
+    float3 mask = make_float3(1.0f, 1.0f, 1.0f);
 
+    for (int depth = 0; depth < 5; depth++)
+    { // iteration up to 4 bounces (replaces recursion in CPU code)
+        
 
- for (int depth = 0; depth < 5; depth++){  // iteration up to 4 bounces (replaces recursion in CPU code)
+        double t;   // distance to closest intersection
+        int id = 0; // index of closest intersected sphere
 
-  double t;           // distance to closest intersection 
-  int id = 0;        // index of closest intersected sphere 
+        // test ray for intersection with scene
+        if (!intersect(r, t, id))
+            return make_float3(0.0f, 0.0f, 0.0f); // if miss, return black
 
-// test ray for intersection with scene
-  if (!intersect(r, t, id))
-   return make_float3(0.0f, 0.0f, 0.0f); // if miss, return black
+        // else, we've got a hit!
+        // compute hitpoint and normal
+        const Sphere &obj = spheres[id];          // hitobject
+        float3 x = r.o + r.d * t;                 // hitpoint
+        float3 n = normalize(x - obj.p);          // normal
+        float3 nl = dot(n, r.d) < 0 ? n : n * -1; // front facing normal
+        float3 f = obj.c;
+        double p = f.x > f.y && f.x > f.z ? f.x : f.y > f.z ? f.y
+                                                            : f.z; // max refl
 
-  // else, we've got a hit!
-  // compute hitpoint and normal
-  const Sphere &obj = spheres[id];  // hitobject
-  float3 x = r.o + r.d*t;          // hitpoint 
-  float3 n = normalize(x - obj.p);    // normal
-  float3 nl = dot(n, r.d) < 0 ? n : n * -1; // front facing normal
-  double p = f.x > f.y && f.x > f.z ? f.x : f.y > f.z ? f.y : f.z; // max refl
+        if (curand_uniform(&state) < p)
+        {
+            f = f * (1 / p);
+        }
 
+        // create 2 random numbers
+        float r1 = 2 * M_PI * curand_uniform(&state); // pick random number on unit circle (radius = 1, circumference = 2*Pi) for azimuth
+        float r2 = curand_uniform(&state);            // pick random number for elevation
+        float r2s = sqrtf(r2);
 
-  if (curand_uniform(&state) < p)
-             f = f * (1 / p);
-         else
-             return obj.e; // R.R.
-  accucolor += mask * obj.e;
+        // compute local orthonormal basis uvw at hitpoint to use for calculation random ray direction
+        // first vector = normal at hitpoint, second vector is orthogonal to first, third vector is orthogonal to first two vectors
+        if (obj.refl == DIFF)
+        {
+            float3 w = nl;
+            float3 u = normalize(cross((fabs(w.x) > .1 ? make_float3(0, 1, 0) : make_float3(1, 0, 0)), w));
+            float3 v = cross(w, u);
+            float3 d = normalize(u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrtf(1 - r2));
+            pixelcolor += mask * obj.e;
+            // new ray origin is intersection point of previous ray with scene
+            r.o = x + nl * 0.05f;
+            r.d = d;
+            mask *= dot(d, nl); // weigh light contribution using cosine of angle between incident light and normal
+            // mask *= 2;          // fudge factor
+        }
 
-  // create 2 random numbers
-  float r1 = 2 * M_PI * curand_uniform(&state); // pick random number on unit circle (radius = 1, circumference = 2*Pi) for azimuth
-  float r2 = curand_uniform(&state);  // pick random number for elevation
-  float r2s = sqrtf(r2); 
+        else if (obj.refl == SPEC)
+        {
+            r.o = x + nl * 0.05f;
+            r.d = r.d - n * 2 * dot(n, r.d);
+            pixelcolor += mask * obj.e;
+        }
+        else if (obj.refl == REFR)
+        {
+            Ray reflRay(x + nl * 0.05f, r.d - n * 2 * dot(n, r.d)); // Ideal dielectric REFRACTION
+            bool into = dot(n, nl) > 0;                             // Ray from outside going in?
+            double nc = 1, nt = 1.5, nnt = into ? nc / nt : nt / nc, ddn = dot(r.d, nl), cos2t;
+            if ((cos2t = 1 - nnt * nnt * (1 - ddn * ddn)) < 0) // Total internal reflection
+            {
+                pixelcolor += mask * obj.e;
+                r.o = reflRay.o;
+                r.d = reflRay.d;
+            }
+            else
+            {
+                float3 tdir = normalize((r.d * nnt - n * ((into ? 1 : -1) * (ddn * nnt + sqrt(cos2t)))));
+                double a = nt - nc, b = nt + nc, R0 = a * a / (b * b), c = 1 - (into ? -ddn : dot(tdir, n));
+                double Re = R0 + (1 - R0) * c * c * c * c * c, Tr = 1 - Re, P = .25 + .5 * Re, RP = Re / P, TP = Tr / (1 - P);
+                if (depth > 0)
+                {
+                    if (curand_uniform(&state) < P)
+                    {
+                        pixelcolor += mask * obj.e * RP;
+                        r.o = reflRay.o;
+                        r.d = reflRay.d;
+                        // mask *= RP;
+                    }
+                    else
+                    {
+                        pixelcolor += mask * obj.e * TP;
+                        r.o = x + nl * 0.05f;
+                        r.d = tdir;
+                        // mask *= TP;
+                    }
+                }
+                else
+                {
+                    pixelcolor += mask * obj.e * Re;
+                    pixelcolor += mask * obj.e * Tr;
+                    r.o = reflRay.o;
+                    r.d = reflRay.d;
+                    // mask *= Re;
+                }
+            }
+        }
 
-  // compute local orthonormal basis uvw at hitpoint to use for calculation random ray direction 
-  // first vector = normal at hitpoint, second vector is orthogonal to first, third vector is orthogonal to first two vectors
-  float3 w = nl; 
-  float3 u = normalize(cross((fabs(w.x) > .1 ? make_float3(0, 1, 0) : make_float3(1, 0, 0)), w));  
-  float3 v = cross(w,u);
-  float3 d = normalize(u*cos(r1)*r2s + v*sin(r1)*r2s + w*sqrtf(1 - r2));
+        // multiply with colour of object
+        mask = make_float3(1.0f, 1.0f, 1.0f) * f;
+        // mask *= dot(d, nl); // weigh light contribution using cosine of angle between incident light and normal
+        mask *= 2; // fudge factor
+    }
 
-  // new ray origin is intersection point of previous ray with scene
-  r.o = x;
-  r.d = d;
-
-  mask *= f;    // multiply with colour of object       
-//   mask *= dot(d,nl);  // weigh light contribution using cosine of angle between incident light and normal
-//   mask *= 2;          // fudge factor
- }
-
- return accucolor;
+    return pixelcolor;
 }
 
-
-
-
-
-__global__ void raytracer(float3 *image, int w, int h, int samps ){
+__global__ void raytracer(float3 *image, int w, int h, int samps)
+{
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
-    
+
     curandState state;
     curand_init(1234, x, y, &state);
     int i;
@@ -221,14 +277,17 @@ __global__ void raytracer(float3 *image, int w, int h, int samps ){
     float3 cx = make_float3(1024 * .5135 / 768, 0, 0);
     float3 cy = normalize(modd(cx, cam.d)) * .5135;
 
-    if (x < w && y < h) {
-    printf("Ye hai aik thread   ");
-    printf("\rRendering (%d spp) %5.2f%%",samps*4,100.*y/(h-1));
-    for (int sy=0; sy <2; sy++){
-        i = (h-y-1)*w +x;
-        for (int sx = 0; sx < 2; sx++) {
-            float3 r = make_float3(0);
-            for (int s = 0; s < samps; s++)
+    if (x < w && y < h)
+    {
+        // printf("Ye hai aik thread   ");
+        printf("\rRendering (%d spp) %5.2f%%", samps * 4, 100. * y / (h - 1));
+        for (int sy = 0; sy < 2; sy++)
+        {
+            i = (h - y - 1) * w + x;
+            for (int sx = 0; sx < 2; sx++)
+            {
+                float3 r = make_float3(0);
+                for (int s = 0; s < samps; s++)
                 {
                     double r1 = 2 * curand_uniform(&state), dx = r1 < 1 ? sqrt(r1) - 1 : 1 - sqrt(2 - r1);
                     double r2 = 2 * curand_uniform(&state), dy = r2 < 1 ? sqrt(r2) - 1 : 1 - sqrt(2 - r2);
@@ -238,25 +297,22 @@ __global__ void raytracer(float3 *image, int w, int h, int samps ){
                     r = r + radiance(pp, state) * (1. / samps);
                 } // Camera rays are pushed ^^^^^ forward to start in interior
                 image[i] = image[i] + make_float3(clamp(r.x), clamp(r.y), clamp(r.z)) * .25;
+            }
         }
     }
 }
-
-}
-
-
 
 // __constant__ *c = new float3[w * h];
 
 int main(int argc, char *argv[])
 {
-    int w = 1024, h = 768, samps = argc == 2 ? atoi(argv[1]) / 4 : 1;              // # samples
-    float3 *c = new float3[w * h];                                              // To store the image
+    int w = 1024, h = 768, samps = argc == 2 ? atoi(argv[1]) / 4 : 1; // # samples
+    float3 *c = new float3[w * h];                                    // To store the image
     float3 *d_c;
     checkCudaErr(cudaMalloc(&d_c, w * h * sizeof(float3)), "malloc");
     // checkCudaErr(cudaMemcpyToSymbol(spheres, spheres_h, sizeof(spheres_h)), "memcpy");
-    dim3 threadsPerBlock(16, 16,1);
-    dim3 numBlocks(w / threadsPerBlock.x, h / threadsPerBlock.y,1);
+    dim3 threadsPerBlock(16, 16, 1);
+    dim3 numBlocks(w / threadsPerBlock.x, h / threadsPerBlock.y, 1);
     raytracer<<<numBlocks, threadsPerBlock>>>(d_c, w, h, samps);
     checkCudaErr(cudaGetLastError(), "raytracer kernel");
     cudaMemcpy(c, d_c, w * h * sizeof(float3), cudaMemcpyDeviceToHost);
