@@ -23,20 +23,6 @@ inline cudaError_t checkCudaErr(cudaError_t err, const char *msg)
     return err;
 }
 
-// std::default_random_engine generator;
-// std::uniform_real_distribution<double> distr(0.0, 1.0);
-// double curand_uniform(unsigned short *X)
-// {
-//     return distr(generator);
-// }
-// float3 operator+(const float3 &b) { return Vec(x + b.x, y + b.y, z + b.z); }
-// float3 operator-(const Vec &b) { return Vec(x - b.x, y - b.y, z - b.z); }
-// float3 operator*(double b)  { return Vec(x * b, y * b, z * b); }
-__device__ float3 mult(const float3 &a, const float3 &b) { return make_float3(a.x * b.x, a.y * b.y, a.z * b.z); }
-// float3 &norm(float3 a) { return *a = *a * (1 / sqrt(a.x * a.x + y * y + z * z)); }
-// double dot(const Vec &b) { return x * b.x + y * b.y + z * b.z; } // cross:
-__device__ float3 modd(const float3 &a, const float3 &b) { return make_float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
-
 struct Ray
 {
     float3 o, d;
@@ -67,19 +53,6 @@ struct Sphere
     }
 };
 
-// __constant__ Sphere spheres[] = {
-//     // Scene: radius, position, emission, color, material
-//     Sphere(1e5, make_float3(1e5 + 1, 40.8, 81.6), float3(), make_float3(.75, .25, .25), DIFF),   // Left
-//     Sphere(1e5, make_float3(-1e5 + 99, 40.8, 81.6), float3(), make_float3(.25, .25, .75), DIFF), // Rght
-//     Sphere(1e5, make_float3(50, 40.8, 1e5), float3(), make_float3(.75, .75, .75), DIFF),         // Back
-//     Sphere(1e5, make_float3(50, 40.8, -1e5 + 170), float3(), float3(), DIFF),                    // Frnt
-//     Sphere(1e5, make_float3(50, 1e5, 81.6), float3(), make_float3(.75, .75, .75), DIFF),         // Botm
-//     Sphere(1e5, make_float3(50, -1e5 + 81.6, 81.6), float3(), make_float3(.75, .75, .75), DIFF), // Top
-//     Sphere(16.5, make_float3(27, 16.5, 47), float3(), make_float3(1, 1, 1) * .999, SPEC),        // Mirr
-//     Sphere(16.5, make_float3(73, 16.5, 78), float3(), make_float3(1, 1, 1) * .999, REFR),        // Glas
-//     Sphere(600, make_float3(50, 681.6 - .27, 81.6), make_float3(12, 12, 12), float3(), DIFF)     // Lite
-
-// };
 __constant__ Sphere spheres[] = {
     {1e5f, {1e5f + 1.0f, 40.8f, 81.6f}, {0.0f, 0.0f, 0.0f}, {0.75f, 0.25f, 0.25f}, DIFF},    // Left
     {1e5f, {-1e5f + 99.0f, 40.8f, 81.6f}, {0.0f, 0.0f, 0.0f}, {.25f, .25f, .75f}, DIFF},     // Rght
@@ -89,13 +62,36 @@ __constant__ Sphere spheres[] = {
     {1e5f, {50.0f, -1e5f + 81.6f, 81.6f}, {0.0f, 0.0f, 0.0f}, {.75f, .75f, .75f}, DIFF},     // Top
     {16.5f, {27.0f, 16.5f, 47.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, SPEC},            // small sphere 1
     {16.5f, {73.0f, 16.5f, 78.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, REFR},            // small sphere 2
-    {600.0f, {50.0f, 681.6f - .77f, 81.6f}, {2.0f, 1.8f, 1.6f}, {0.0f, 0.0f, 0.0f}, DIFF}    // Light
+    {600.0f, {50.0f, 681.6f - .27f, 81.6f}, {12.0f, 12.0f, 12.0f}, {0.0f, 0.0f, 0.0f}, DIFF} // Light
 };
 
-// __constant__ Sphere *spheres;
+// __constant__ Sphere spheres[] = {
+//     {1e5f, {50.0f, 1e5f - 4.0f, 81.6f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, DIFF},  // Botm
+//     {12.0f, {48.0f, 32.0f, 24.0f}, {3.0f, 3.0f, 3.0f}, {0.0f, 0.0f, 0.0f}, DIFF},       // light
+//     {12.0f, {24.0f, 8.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {0.408f, 0.741f, 0.467f}, DIFF},  // small sphere 2
+//     {12.0f, {24.0f, 8.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {0.392f, 0.584f, 0.929f}, DIFF},  // 3
+//     {12.0f, {20.0f, 52.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.498f, 0.314f}, DIFF},   // 5
+//     {12.0f, {24.0f, 48.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {0.95f, 0.95f, 0.95f}, SPEC},    // 5
+//     {12.0f, {72.0f, 8.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {0.95f, 0.95f, 0.95f}, SPEC},     // 3
+//     {12.0f, {72.0f, 8.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.498f, 0.314f}, DIFF},    // 2
+//     {12.0f, {76.0f, 52.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {0.392f, 0.584f, 0.929f}, DIFF}, // 1
+//     {12.0f, {72.0f, 48.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {0.408f, 0.741f, 0.467f}, DIFF},
+// };
 
-inline __host__ __device__ double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1
-                                                                             : x; }
+// __constant__ Sphere spheres[] = {
+//     {1e3f, {50.0f, 1000.0f, -500}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, DIFF}, // Botm
+//     {600.0f, {50.0f, -600.0f, 12}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, DIFF}, // Botm
+//     {26.0f, {0.0f, 30.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, DIFF},   // Botm
+//     {26.0f, {100.0f, 30.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, DIFF},
+//     {26.0f, {50.0f, 30.0f, 0.0f}, {12.0f, 12.0f, 12.0f}, {0.0f, 0.0f, 0.0f}, DIFF},
+// }; // Botm
+
+inline __host__ __device__ double
+clamp(double x)
+{
+    return x < 0 ? 0 : x > 1 ? 1
+                             : x;
+}
 
 inline __host__ __device__ int toInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
 
@@ -111,64 +107,26 @@ inline __device__ bool intersect(const Ray &r, double &t, int &id) // all args d
     return t < inf;
 }
 
-// __device__ float3 radiance2(const Ray &r, int depth, curandState state)
-// {
-//     double t;   // distance to intersection
-//     int id = 0; // id of intersected object
-//     if (!intersect(r, t, id))
-//         return float3();             // if miss, return black
-//     const Sphere &obj = spheres[id]; // the hit object
-//     float3 x = r.o + r.d * t, n = normalize(x - obj.p), nl = dot(n, r.d) < 0 ? n : n * -1, f = obj.c;
-//     double p = f.x > f.y && f.x > f.z ? f.x : f.y > f.z ? f.y
-//                                                         : f.z; // max refl
-//     if (++depth > 1)
-//         if (curand_uniform(&state) < p)
-//             f = f * (1 / p);
-//         else
-//             return obj.e; // R.R.
-
-//     if (obj.refl == DIFF)
-//     { // Ideal DIFFUSE reflection
-//         double r1 = 2 * M_PI * curand_uniform(&state), r2 = curand_uniform(&state), r2s = sqrt(r2);
-//         float3 w = nl, u = normalize(modd((fabs(w.x) > .1 ? make_float3(0, 1, 0) : make_float3(1, 0, 0)), w)), v = modd(w, u);
-//         float3 d = normalize((u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)));
-//         return obj.e + mult(f, radiance(Ray(x, d), depth, state));
-//     }
-//     else if (obj.refl == SPEC) // Ideal SPECULAR reflection
-//         return obj.e + mult(f, radiance(Ray(x, r.d - n * 2 * dot(n, r.d)), depth, state));
-//     Ray reflRay(x, r.d - n * 2 * dot(n, r.d)); // Ideal dielectric REFRACTION
-//     bool into = dot(n, nl) > 0;                // Ray from outside going in?
-//     double nc = 1, nt = 1.5, nnt = into ? nc / nt : nt / nc, ddn = dot(r.d, nl), cos2t;
-//     if ((cos2t = 1 - nnt * nnt * (1 - ddn * ddn)) < 0) // Total internal reflection
-//         return obj.e + mult(f, radiance(reflRay, depth, state));
-//     float3 tdir = normalize((r.d * nnt - n * ((into ? 1 : -1) * (ddn * nnt + sqrt(cos2t)))));
-//     double a = nt - nc, b = nt + nc, R0 = a * a / (b * b), c = 1 - (into ? -ddn : dot(tdir, n));
-//     double Re = R0 + (1 - R0) * c * c * c * c * c, Tr = 1 - Re, P = .25 + .5 * Re, RP = Re / P, TP = Tr / (1 - P);
-//     return obj.e + mult(f, depth > 2 ? (curand_uniform(&state) < P ? // Russian roulette
-//                                             radiance(reflRay, depth, state) * RP
-//                                                                   : radiance(Ray(x, tdir), depth, state) * TP)
-//                                      : radiance(reflRay, depth, state) * Re + radiance(Ray(x, tdir), depth, state) * Tr);
-// }
-
-// __global__ aulad_kernel() {
-
-// }
-__device__ float3 radiance(Ray &r, curandState state)
+__device__ float3 radiance(Ray &r, curandState state, int d = 0)
 { // returns ray color
 
     float3 pixelcolor = make_float3(0.0f, 0.0f, 0.0f);
+    // float3 pixelcolor = make_float3();
     float3 mask = make_float3(1.0f, 1.0f, 1.0f);
 
-    for (int depth = 0; depth < 5; depth++)
+    for (int depth = d; depth < 10; depth++)
     { // iteration up to 4 bounces (replaces recursion in CPU code)
-        
 
         double t;   // distance to closest intersection
         int id = 0; // index of closest intersected sphere
 
         // test ray for intersection with scene
         if (!intersect(r, t, id))
-            return make_float3(0.0f, 0.0f, 0.0f); // if miss, return black
+        {
+            // pixelcolor += make_float3(0.846f, 0.933f, 0.949f); // if miss, return black
+            // return pixelcolor;
+            return make_float3(0.0f, 0.0f, 0.0f);
+        } // if miss, return black
 
         // else, we've got a hit!
         // compute hitpoint and normal
@@ -179,11 +137,18 @@ __device__ float3 radiance(Ray &r, curandState state)
         float3 f = obj.c;
         double p = f.x > f.y && f.x > f.z ? f.x : f.y > f.z ? f.y
                                                             : f.z; // max refl
-
-        if (curand_uniform(&state) < p)
-        {
-            f = f * (1 / p);
-        }
+        // if (depth > 5)
+        // {
+        //     if (curand_uniform(&state) < p)
+        //     {
+        //         f = f * (1 / p);
+        //     }
+        //     else
+        //     {
+        //         pixelcolor += obj.e * mask;
+        //         break;
+        //     }
+        // }
 
         // create 2 random numbers
         float r1 = 2 * M_PI * curand_uniform(&state); // pick random number on unit circle (radius = 1, circumference = 2*Pi) for azimuth
@@ -202,7 +167,7 @@ __device__ float3 radiance(Ray &r, curandState state)
             // new ray origin is intersection point of previous ray with scene
             r.o = x + nl * 0.05f;
             r.d = d;
-            mask *= dot(d, nl); // weigh light contribution using cosine of angle between incident light and normal
+            // mask *= dot(d, nl); // weigh light contribution using cosine of angle between incident light and normal
             // mask *= 2;          // fudge factor
         }
 
@@ -228,7 +193,7 @@ __device__ float3 radiance(Ray &r, curandState state)
                 float3 tdir = normalize((r.d * nnt - n * ((into ? 1 : -1) * (ddn * nnt + sqrt(cos2t)))));
                 double a = nt - nc, b = nt + nc, R0 = a * a / (b * b), c = 1 - (into ? -ddn : dot(tdir, n));
                 double Re = R0 + (1 - R0) * c * c * c * c * c, Tr = 1 - Re, P = .25 + .5 * Re, RP = Re / P, TP = Tr / (1 - P);
-                if (depth > 0)
+                if (depth > 2)
                 {
                     if (curand_uniform(&state) < P)
                     {
@@ -248,18 +213,21 @@ __device__ float3 radiance(Ray &r, curandState state)
                 else
                 {
                     pixelcolor += mask * obj.e * Re;
+                    pixelcolor += radiance(reflRay, state, depth + 1) * Re;
+                    // r.o = reflRay.o;
+                    // r.d = reflRay.d;
+                    r.o = x;
+                    r.d = tdir;
                     pixelcolor += mask * obj.e * Tr;
-                    r.o = reflRay.o;
-                    r.d = reflRay.d;
+
                     // mask *= Re;
                 }
             }
         }
 
         // multiply with colour of object
-        mask = make_float3(1.0f, 1.0f, 1.0f) * f;
-        // mask *= dot(d, nl); // weigh light contribution using cosine of angle between incident light and normal
-        mask *= 2; // fudge factor
+        mask *= f;
+        // mask *= 2; // fudge factor
     }
 
     return pixelcolor;
@@ -269,18 +237,20 @@ __global__ void raytracer(float3 *image, int w, int h, int samps)
 {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
+    int threadid = x + y * w;
 
     curandState state;
-    curand_init(1234, x, y, &state);
+    curand_init(2045 + threadid, 0, 0, &state);
     int i;
     Ray cam(make_float3(50, 52, 295.6), normalize(make_float3(0, -0.042612, -1))); // cam pos, dir
     float3 cx = make_float3(1024 * .5135 / 768, 0, 0);
-    float3 cy = normalize(modd(cx, cam.d)) * .5135;
+    float3 cy = normalize(cross(cx, cam.d)) * .5135;
 
     if (x < w && y < h)
     {
         // printf("Ye hai aik thread   ");
         printf("\rRendering (%d spp) %5.2f%%", samps * 4, 100. * y / (h - 1));
+        float3 temp = make_float3(0);
         for (int sy = 0; sy < 2; sy++)
         {
             i = (h - y - 1) * w + x;
@@ -296,9 +266,10 @@ __global__ void raytracer(float3 *image, int w, int h, int samps)
                     Ray pp(cam.o + d * 140, d);
                     r = r + radiance(pp, state) * (1. / samps);
                 } // Camera rays are pushed ^^^^^ forward to start in interior
-                image[i] = image[i] + make_float3(clamp(r.x), clamp(r.y), clamp(r.z)) * .25;
+                temp = temp + make_float3(clamp(r.x), clamp(r.y), clamp(r.z)) * .25;
             }
         }
+        image[i] = image[i] + temp;
     }
 }
 
