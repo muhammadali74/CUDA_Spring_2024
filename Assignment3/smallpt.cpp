@@ -74,6 +74,28 @@ Sphere spheres[] = {
     Sphere(16.5, Vec(73, 16.5, 78), Vec(), Vec(1, 1, 1) * .999, REFR),        // Glas
     Sphere(600, Vec(50, 681.6 - .27, 81.6), Vec(12, 12, 12), Vec(), DIFF)     // Lite
 };
+// Scene 2
+// Sphere spheres[] = {
+//     Sphere(1e5f, Vec(48.0f, -1e5f - 4.0f, 24.0f), Vec(), Vec(0.95f, 0.95f, 0.95f), DIFF), // Botm
+//     Sphere(12.0f, Vec(48.0f, 32.0f, 24.0f), Vec(3.0f, 3.0f, 3.0f), Vec(), DIFF),          // light
+//     Sphere(12.0f, Vec(24.0f, 8.0f, 40.0f), Vec(), Vec(0.408f, 0.741f, 0.467f), DIFF),     // small sphere 2
+//     Sphere(12.0f, Vec(24.0f, 8.0f, -8.0f), Vec(), Vec(0.392f, 0.584f, 0.929f), DIFF),     // 3
+//     Sphere(12.0f, Vec(20.0f, 52.0f, 40.0f), Vec(), Vec(1.0f, 0.498f, 0.314f), DIFF),      // 5
+//     Sphere(12.0f, Vec(24.0f, 48.0f, -8.0f), Vec(), Vec(0.95f, 0.95f, 0.95f), SPEC),       // 5
+//     Sphere(12.0f, Vec(72.0f, 8.0f, 40.0f), Vec(), Vec(0.95f, 0.95f, 0.95f), SPEC),        // 3
+//     Sphere(12.0f, Vec(72.0f, 8.0f, -8.0f), Vec(), Vec(1.0f, 0.498f, 0.314f), DIFF),       // 2
+//     Sphere(12.0f, Vec(76.0f, 52.0f, 40.0f), Vec(), Vec(0.392f, 0.584f, 0.929f), DIFF),    // 1
+//     Sphere(12.0f, Vec(72.0f, 48.0f, -8.0f), Vec(), Vec(0.408f, 0.741f, 0.467f), DIFF)};
+
+// Scene 3
+
+// Sphere spheres[] = {
+//     Sphere(1e3f, Vec(50.0f, 1000.0f, -500), Vec(), Vec(1.0f, 1.0f, 1.0f), DIFF), // Botm
+//     Sphere(600.0f, Vec(50.0f, -600.0f, 12), Vec(), Vec(1.0f, 1.0f, 1.0f), DIFF), // Botm
+//     Sphere(26.0f, Vec(0.0f, 30.0f, 0.0f), Vec(), Vec(1.0f, 0.0f, 0.0f), DIFF),   // r
+//     Sphere(26.0f, Vec(100.0f, 30.0f, 0.0f), Vec(), Vec(0.0f, 1.0f, 0.0f), DIFF), //g
+//     Sphere(26.0f, Vec(50.0f, 30.0f, 0.0f), Vec(3.0f, 3.0f, 3.0f), Vec(0.0f, 0.0f, 0.0f), DIFF)}; light
+
 inline double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1
                                                          : x; }
 
@@ -132,7 +154,7 @@ int main(int argc, char *argv[])
     int w = 1024, h = 768, samps = argc == 2 ? atoi(argv[1]) / 4 : 1; // # samples
     Ray cam(Vec(50, 52, 295.6), Vec(0, -0.042612, -1).norm());        // cam pos, dir
     Vec cx = Vec(w * .5135 / h), cy = (cx % cam.d).norm() * .5135, r, *c = new Vec[w * h];
-    #pragma omp parallel for schedule(dynamic, 1) private(r) // OpenMP
+#pragma omp parallel for schedule(dynamic, 1) private(r) // OpenMP
     for (int y = 0; y < h; y++)
     { // Loop over image rows
         std::cout << "started\n";

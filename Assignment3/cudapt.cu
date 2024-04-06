@@ -12,6 +12,11 @@
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
+// Set Gamma correction to 2.2 for scene 1 and 3, and 0.9 for scene 2
+#define GAMMA 2.2
+// Set Backgorumd to make_float3(0.846f, 0.933f, 0.949f) for scene 2
+#define BACKGROUND make_float3(0.0f, 0.0f, 0.0f)
+
 #endif
 
 inline cudaError_t checkCudaErr(cudaError_t err, const char *msg)
@@ -53,6 +58,9 @@ struct Sphere
     }
 };
 
+// **********SCENES**********
+
+// SCENE 1 Cornel box
 __constant__ Sphere spheres[] = {
     {1e5f, {1e5f + 1.0f, 40.8f, 81.6f}, {0.0f, 0.0f, 0.0f}, {0.75f, 0.25f, 0.25f}, DIFF},    // Left
     {1e5f, {-1e5f + 99.0f, 40.8f, 81.6f}, {0.0f, 0.0f, 0.0f}, {.25f, .25f, .75f}, DIFF},     // Rght
@@ -65,26 +73,29 @@ __constant__ Sphere spheres[] = {
     {600.0f, {50.0f, 681.6f - .27f, 81.6f}, {12.0f, 12.0f, 12.0f}, {0.0f, 0.0f, 0.0f}, DIFF} // Light
 };
 
+// SCENE 2: 9 Spheres
 // __constant__ Sphere spheres[] = {
-//     {1e5f, {50.0f, 1e5f - 4.0f, 81.6f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, DIFF},  // Botm
-//     {12.0f, {48.0f, 32.0f, 24.0f}, {3.0f, 3.0f, 3.0f}, {0.0f, 0.0f, 0.0f}, DIFF},       // light
-//     {12.0f, {24.0f, 8.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {0.408f, 0.741f, 0.467f}, DIFF},  // small sphere 2
-//     {12.0f, {24.0f, 8.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {0.392f, 0.584f, 0.929f}, DIFF},  // 3
-//     {12.0f, {20.0f, 52.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.498f, 0.314f}, DIFF},   // 5
-//     {12.0f, {24.0f, 48.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {0.95f, 0.95f, 0.95f}, SPEC},    // 5
-//     {12.0f, {72.0f, 8.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {0.95f, 0.95f, 0.95f}, SPEC},     // 3
-//     {12.0f, {72.0f, 8.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.498f, 0.314f}, DIFF},    // 2
-//     {12.0f, {76.0f, 52.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {0.392f, 0.584f, 0.929f}, DIFF}, // 1
+//     {1e5f, {48.0f, -1e5f - 4.0f, 24.0f}, {0.0f, 0.0f, 0.0f}, {0.95f, 0.95f, 0.95f}, DIFF}, // Botm
+//     {12.0f, {48.0f, 32.0f, 24.0f}, {3.0f, 3.0f, 3.0f}, {0.0f, 0.0f, 0.0f}, DIFF},          // light
+//     {12.0f, {24.0f, 8.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {0.408f, 0.741f, 0.467f}, DIFF},     // small sphere 2
+//     {12.0f, {24.0f, 8.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {0.392f, 0.584f, 0.929f}, DIFF},     // 3
+//     {12.0f, {20.0f, 52.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.498f, 0.314f}, DIFF},      // 5
+//     {12.0f, {24.0f, 48.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {0.95f, 0.95f, 0.95f}, SPEC},       // 5
+//     {12.0f, {72.0f, 8.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {0.95f, 0.95f, 0.95f}, SPEC},        // 3
+//     {12.0f, {72.0f, 8.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.498f, 0.314f}, DIFF},       // 2
+//     {12.0f, {76.0f, 52.0f, 40.0f}, {0.0f, 0.0f, 0.0f}, {0.392f, 0.584f, 0.929f}, DIFF},    // 1
 //     {12.0f, {72.0f, 48.0f, -8.0f}, {0.0f, 0.0f, 0.0f}, {0.408f, 0.741f, 0.467f}, DIFF},
 // };
 
+// Scene 3: red green spheres
+// This scene is recreated by Arsalan Hussain
 // __constant__ Sphere spheres[] = {
 //     {1e3f, {50.0f, 1000.0f, -500}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, DIFF}, // Botm
 //     {600.0f, {50.0f, -600.0f, 12}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, DIFF}, // Botm
-//     {26.0f, {0.0f, 30.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, DIFF},   // Botm
-//     {26.0f, {100.0f, 30.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, DIFF},
-//     {26.0f, {50.0f, 30.0f, 0.0f}, {12.0f, 12.0f, 12.0f}, {0.0f, 0.0f, 0.0f}, DIFF},
-// }; // Botm
+//     {26.0f, {0.0f, 30.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, DIFF},   // r
+//     {26.0f, {100.0f, 30.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, DIFF}, //g
+//     {26.0f, {50.0f, 30.0f, 0.0f}, {3.0f, 3.0f, 3.0f}, {0.0f, 0.0f, 0.0f}, DIFF},  //lit
+// };
 
 inline __host__ __device__ double
 clamp(double x)
@@ -93,13 +104,13 @@ clamp(double x)
                              : x;
 }
 
-inline __host__ __device__ int toInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
+inline __host__ __device__ int toInt(double x) { return int(pow(clamp(x), 1 / GAMMA) * 255 + .5); }
 
 inline __device__ bool intersect(const Ray &r, double &t, int &id) // all args device frinedly
 {
     double n = sizeof(spheres) / sizeof(Sphere), d, inf = t = 1e20;
     for (int i = int(n); i--;)
-        if ((d = spheres[i].intersect(r)) && d < t) // data dependency so cant paralleize. divergence ka boht khtra
+        if ((d = spheres[i].intersect(r)) && d < t) // data dependency
         {
             t = d;
             id = i;
@@ -111,11 +122,10 @@ __device__ float3 radiance(Ray &r, curandState state, int d = 0)
 { // returns ray color
 
     float3 pixelcolor = make_float3(0.0f, 0.0f, 0.0f);
-    // float3 pixelcolor = make_float3();
     float3 mask = make_float3(1.0f, 1.0f, 1.0f);
 
     for (int depth = d; depth < 10; depth++)
-    { // iteration up to 4 bounces (replaces recursion in CPU code)
+    {
 
         double t;   // distance to closest intersection
         int id = 0; // index of closest intersected sphere
@@ -123,20 +133,18 @@ __device__ float3 radiance(Ray &r, curandState state, int d = 0)
         // test ray for intersection with scene
         if (!intersect(r, t, id))
         {
-            // pixelcolor += make_float3(0.846f, 0.933f, 0.949f); // if miss, return black
-            // return pixelcolor;
-            return make_float3(0.0f, 0.0f, 0.0f);
-        } // if miss, return black
+            return pixelcolor + (BACKGROUND * mask); // for scene 3
+        }
 
-        // else, we've got a hit!
-        // compute hitpoint and normal
-        const Sphere &obj = spheres[id];          // hitobject
-        float3 x = r.o + r.d * t;                 // hitpoint
-        float3 n = normalize(x - obj.p);          // normal
-        float3 nl = dot(n, r.d) < 0 ? n : n * -1; // front facing normal
+        const Sphere &obj = spheres[id];
+        float3 x = r.o + r.d * t;
+        float3 n = normalize(x - obj.p);
+        float3 nl = dot(n, r.d) < 0 ? n : n * -1;
         float3 f = obj.c;
         double p = f.x > f.y && f.x > f.z ? f.x : f.y > f.z ? f.y
-                                                            : f.z; // max refl
+                                                            : f.z;
+
+        // Russain Roulette. Can be turned on but it reduces code perfromance (due to branch divergence maybe)
         // if (depth > 5)
         // {
         //     if (curand_uniform(&state) < p)
@@ -151,12 +159,10 @@ __device__ float3 radiance(Ray &r, curandState state, int d = 0)
         // }
 
         // create 2 random numbers
-        float r1 = 2 * M_PI * curand_uniform(&state); // pick random number on unit circle (radius = 1, circumference = 2*Pi) for azimuth
-        float r2 = curand_uniform(&state);            // pick random number for elevation
+        float r1 = 2 * M_PI * curand_uniform(&state);
+        float r2 = curand_uniform(&state);
         float r2s = sqrtf(r2);
 
-        // compute local orthonormal basis uvw at hitpoint to use for calculation random ray direction
-        // first vector = normal at hitpoint, second vector is orthogonal to first, third vector is orthogonal to first two vectors
         if (obj.refl == DIFF)
         {
             float3 w = nl;
@@ -164,11 +170,8 @@ __device__ float3 radiance(Ray &r, curandState state, int d = 0)
             float3 v = cross(w, u);
             float3 d = normalize(u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrtf(1 - r2));
             pixelcolor += mask * obj.e;
-            // new ray origin is intersection point of previous ray with scene
             r.o = x + nl * 0.05f;
             r.d = d;
-            // mask *= dot(d, nl); // weigh light contribution using cosine of angle between incident light and normal
-            // mask *= 2;          // fudge factor
         }
 
         else if (obj.refl == SPEC)
@@ -213,26 +216,24 @@ __device__ float3 radiance(Ray &r, curandState state, int d = 0)
                 else
                 {
                     pixelcolor += mask * obj.e * Re;
-                    pixelcolor += radiance(reflRay, state, depth + 1) * Re;
+                    pixelcolor += radiance(reflRay, state, depth + 1) * Re; // a recursive call. Reduces the performance of code but is important.
                     // r.o = reflRay.o;
                     // r.d = reflRay.d;
                     r.o = x;
                     r.d = tdir;
                     pixelcolor += mask * obj.e * Tr;
-
-                    // mask *= Re;
                 }
             }
         }
 
         // multiply with colour of object
         mask *= f;
-        // mask *= 2; // fudge factor
     }
 
     return pixelcolor;
 }
 
+// main function from smallpt parallelized
 __global__ void raytracer(float3 *image, int w, int h, int samps)
 {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -240,7 +241,7 @@ __global__ void raytracer(float3 *image, int w, int h, int samps)
     int threadid = x + y * w;
 
     curandState state;
-    curand_init(2045 + threadid, 0, 0, &state);
+    curand_init(2045 + threadid, 0, 0, &state); // random seed
     int i;
     Ray cam(make_float3(50, 52, 295.6), normalize(make_float3(0, -0.042612, -1))); // cam pos, dir
     float3 cx = make_float3(1024 * .5135 / 768, 0, 0);
@@ -248,7 +249,6 @@ __global__ void raytracer(float3 *image, int w, int h, int samps)
 
     if (x < w && y < h)
     {
-        // printf("Ye hai aik thread   ");
         printf("\rRendering (%d spp) %5.2f%%", samps * 4, 100. * y / (h - 1));
         float3 temp = make_float3(0);
         for (int sy = 0; sy < 2; sy++)
@@ -273,8 +273,6 @@ __global__ void raytracer(float3 *image, int w, int h, int samps)
     }
 }
 
-// __constant__ *c = new float3[w * h];
-
 int main(int argc, char *argv[])
 {
     int w = 1024, h = 768, samps = argc == 2 ? atoi(argv[1]) / 4 : 1; // # samples
@@ -286,11 +284,14 @@ int main(int argc, char *argv[])
     dim3 numBlocks(w / threadsPerBlock.x, h / threadsPerBlock.y, 1);
     raytracer<<<numBlocks, threadsPerBlock>>>(d_c, w, h, samps);
     checkCudaErr(cudaGetLastError(), "raytracer kernel");
-    cudaMemcpy(c, d_c, w * h * sizeof(float3), cudaMemcpyDeviceToHost);
-    cudaFree(d_c);
+    checkCudaErr(cudaMemcpy(c, d_c, w * h * sizeof(float3), cudaMemcpyDeviceToHost), "memcpy");
+    checkCudaErr(cudaFree(d_c), "free");
 
     FILE *f = fopen("image.ppm", "w"); // Write image to PPM file.
     fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
     for (int i = 0; i < w * h; i++)
         fprintf(f, "%d %d %d ", toInt(c[i].x), toInt(c[i].y), toInt(c[i].z));
+
+    free(c);
+    return 0;
 }
