@@ -13,7 +13,7 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 // Set Gamma correction to 2.2 for scene 1 and 3, and 0.9 for scene 2
-#define GAMMA 2.2
+#define GAMMA 2.1
 // Set Backgorumd to make_float3(0.846f, 0.933f, 0.949f) for scene 2
 #define BACKGROUND make_float3(0.0f, 0.0f, 0.0f)
 
@@ -68,8 +68,8 @@ __constant__ Sphere spheres[] = {
     {1e5f, {50.0f, 40.8f, -1e5f + 600.0f}, {0.0f, 0.0f, 0.0f}, {1.00f, 1.00f, 1.00f}, DIFF}, // Frnt
     {1e5f, {50.0f, 1e5f, 81.6f}, {0.0f, 0.0f, 0.0f}, {.75f, .75f, .75f}, DIFF},              // Botm
     {1e5f, {50.0f, -1e5f + 81.6f, 81.6f}, {0.0f, 0.0f, 0.0f}, {.75f, .75f, .75f}, DIFF},     // Top
-    {16.5f, {27.0f, 16.5f, 47.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, SPEC},            // small sphere 1
-    {16.5f, {73.0f, 16.5f, 78.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, REFR},            // small sphere 2
+    {16.5f, {27.0f, 16.5f, 47.0f}, {0.0f, 0.0f, 0.0f}, {0.999f, 0.999f, 0.999f}, SPEC},      // small sphere 1
+    {16.5f, {73.0f, 16.5f, 78.0f}, {0.0f, 0.0f, 0.0f}, {0.999f, 0.999f, 0.999f}, REFR},      // small sphere 2
     {600.0f, {50.0f, 681.6f - .27f, 81.6f}, {12.0f, 12.0f, 12.0f}, {0.0f, 0.0f, 0.0f}, DIFF} // Light
 };
 
@@ -282,15 +282,27 @@ int main(int argc, char *argv[])
     // checkCudaErr(cudaMemcpyToSymbol(spheres, spheres_h, sizeof(spheres_h)), "memcpy");
     dim3 threadsPerBlock(16, 16, 1);
     dim3 numBlocks(w / threadsPerBlock.x, h / threadsPerBlock.y, 1);
+    // Record time
+    cudaEvent_t start, stop;
+    float gputime;
+    checkCudaErr(cudaEventCreate(&start), "event creation");
+    checkCudaErr(cudaEventCreate(&stop), "event creation");
+    checkCudaErr(cudaEventRecord(start), "event record");
     raytracer<<<numBlocks, threadsPerBlock>>>(d_c, w, h, samps);
     checkCudaErr(cudaGetLastError(), "raytracer kernel");
+    checkCudaErr(cudaEventRecord(stop), "event record");
+    checkCudaErr(cudaEventSynchronize(stop), "event synchronize");
+    cudaEventElapsedTime(&gputime, start, stop);
+
     checkCudaErr(cudaMemcpy(c, d_c, w * h * sizeof(float3), cudaMemcpyDeviceToHost), "memcpy");
     checkCudaErr(cudaFree(d_c), "free");
+    
 
     FILE *f = fopen("image.ppm", "w"); // Write image to PPM file.
     fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
     for (int i = 0; i < w * h; i++)
         fprintf(f, "%d %d %d ", toInt(c[i].x), toInt(c[i].y), toInt(c[i].z));
+    printf("Total time to generate data on GPU: %f msecs\n", gputime);
 
     free(c);
     return 0;
