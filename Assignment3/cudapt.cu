@@ -10,14 +10,14 @@
 #include "vecutils.h" // from http://www.icmc.usp.br/~castelo/CUDA/common/inc/cutil_math.h
 #include <curand_kernel.h>
 
-#ifndef M_PI
+// #ifndef M_PI
 #define M_PI 3.14159265358979323846
 // Set Gamma correction to 2.2 for scene 1 and 3, and 0.9 for scene 2
 #define GAMMA 2.1
 // Set Backgorumd to make_float3(0.846f, 0.933f, 0.949f) for scene 2
 #define BACKGROUND make_float3(0.0f, 0.0f, 0.0f)
 
-#endif
+// #endif
 
 inline cudaError_t checkCudaErr(cudaError_t err, const char *msg)
 {
