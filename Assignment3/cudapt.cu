@@ -141,8 +141,8 @@ __device__ float3 radiance(Ray &r, curandState state, int d = 0)
         float3 n = normalize(x - obj.p);
         float3 nl = dot(n, r.d) < 0 ? n : n * -1;
         float3 f = obj.c;
-        double p = f.x > f.y && f.x > f.z ? f.x : f.y > f.z ? f.y
-                                                            : f.z;
+        // double p = f.x > f.y && f.x > f.z ? f.x : f.y > f.z ? f.y
+        //                                                     : f.z;
 
         // Russain Roulette. Can be turned on but it reduces code perfromance (due to branch divergence maybe)
         // if (depth > 5)
