@@ -1,6 +1,19 @@
 # CUDA_Spring_2024
 Accompanying code repository for my CUDA course offering in Spring 2024. The first week work is largely getting started with the two most common machine and deeplearning platforms Google Colab and Kaggle. Both are equally good but Kaggle provides more recent GPUs and provides a range of GPUs to pick from. Google Colab is limited to one GPU or a TPU. 
 
+# Assignments (By me)
+
+# Assignment 01
+This Assignment is an introductory assignment and involves perofrming basic memory operations on GPU, writing an algorithm to calculate sum on GPU and analyse the speedUp.
+
+# Assignment 02 
+This assignment involes accelerating a simple Neural Network on GPU and testing it on XOR solver and MNIST Data using CUDA.
+
+# Assignment 03 
+This involves making a GPU accelerated Ray Tracer using CUDA and testing it on different scenes
+
+
+# Examples Codes (By Dr Mobeen)
 ## Week 1
 
 If you examine the Week1 folder your will see 6 jupyter notebooks. The first three do hello world in Google Colab while the later 3 do hello world in Kaggle. Feel free to get comfortable with both of these environments.  
